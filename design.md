@@ -3,40 +3,51 @@ design
 MPU GPIO, Serial Port !!
 CPU clock, Motor, Sensor resolution!!
 
-Hardware
---- 
-01. Frame
-02. Battery 4S~ 
-03. BLDC motor *4
-04. ESC *4
-    
-11. MPU
-    
-21. GPS
-22. Wireless communicator
-23. IMU 9axis~
-    
-31. Remote Controller Frame
-32. Control Stick or Btn
-33. Wireless communicator
+# Hardware
 
-81. mini Cam (height required)
-82. mini Gripper (height required)
-~~99. Gimbal~~
+### Body 
+1. Frame
+2. Battery 4S~ 
+3. BLDC motor *4
+4. ESC *4
 
-Software
-00. OS
-01. Motor Controller
+### Processors
+1. Main Processor
+2. Sub Processor
+3. Communicator
 
-11. Pose Controller
-12. Landing Controller
+### Sensors    
+1. GPS
+2. Wireless communicator
+3. IMU 9axis~
 
-21. GPS Process
-22. Remote Process
-23. IMU Process
+### Remote Controller    
+1. Remote Controller Frame
+2. Control Stick or Btn
+3. Wireless communicator
 
-31. Remote Controller
+### Additional Features
+1. mini Cam (height required)
+2. mini Gripper (height required)
+9. ~~Gimbal~~
 
-81. Image Processor, Cam
-    
-  ~~99.Gimbal Controller~~
+# Software
+### Main Process
+0. OS
+1. Motor Controller
+
+### Pose Process
+1. Pose Controller
+2. Landing Controller
+
+### Sensor Process
+1. GPS Process
+2. Remote Process
+3. IMU Process
+
+### Remote Process
+1. Remote Controller
+
+### Additional Features
+1. Image Processor, Cam
+9. ~~Gimbal Controller~~
