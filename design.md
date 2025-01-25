@@ -10,6 +10,7 @@ CPU clock, Motor, Sensor resolution!!
 2. Battery 4S~ 
 3. BLDC motor *4
 4. ESC *4
+5. Bread Board
 
 ### Processors
 1. Main Processor
