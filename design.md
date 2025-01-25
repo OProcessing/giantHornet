@@ -21,6 +21,7 @@ CPU clock, Motor, Sensor resolution!!
 1. GPS
 2. Wireless communicator
 3. IMU 9axis~
+4. Height Sensor
 
 ### Remote Controller    
 1. Remote Controller Frame
@@ -45,6 +46,7 @@ CPU clock, Motor, Sensor resolution!!
 1. GPS Process
 2. Remote Process
 3. IMU Process
+4. Height Sensor Process
 
 ### Remote Process
 1. Remote Controller
