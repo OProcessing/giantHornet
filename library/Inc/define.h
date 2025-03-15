@@ -59,11 +59,11 @@ int calculate_sum(int *arr, int size) {
 
 
 
-// Á¤ÀÇµÈ ÀÌ¸§Àº ÃßÈÄ º¯°æ. ÇöÀç´Â ÀÓ½Ã·Î Á¤ÀÇÇÔ.
-// »ç¿ëÀÚ Á¤ÀÇ ¿¡·¯ (STM ±ÇÀå Çü½Ä)
+// ì •ì˜ëœ ì´ë¦„ì€ ì¶”í›„ ë³€ê²½. í˜„ìž¬ëŠ” ìž„ì‹œë¡œ ì •ì˜í•¨.
+// ì‚¬ìš©ìž ì •ì˜ ì—ëŸ¬ (STM ê¶Œìž¥ í˜•ì‹)
 typedef enum
 {
-    USER_RET_OK                		= 0x00U,
+    USER_RET_OK                		    = 0x00U,
     USER_RET_ERR_INVALID_PARAM       	= 0x01U << 0,
     USER_RET_ERR_NULL_POINTER        	= 0x01U << 1,
     USER_RET_ERR_COMMUNICATION_FAIL  	= 0x01U << 2,
