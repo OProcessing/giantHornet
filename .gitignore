@@ -1,2 +1,4 @@
 *.bkp
 .metadata/
+
+Debug/*

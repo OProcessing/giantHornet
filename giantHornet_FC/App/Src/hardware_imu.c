@@ -1,745 +1,704 @@
+#include "MPU9250-DMP.h"
+#include "math.h"
 
-/**
- * Copyright (c) 2015 - present LibDriver All rights reserved
- * 
- * The MIT License (MIT)
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE. 
- *
- * @file      driver_mpu9250_basic.c
- * @brief     driver mpu9250 basic source file
- * @version   1.0.0
- * @author    Shifeng Li
- * @date      2022-08-30
- *
- * <h3>history</h3>
- * <table>
- * <tr><th>Date        <th>Version  <th>Author      <th>Description
- * <tr><td>2022/08/30  <td>1.0      <td>Shifeng Li  <td>first upload
- * </table>
- */
+#include "inv_mpu.h"
 
-#include "driver_mpu9250_basic.h"
+static unsigned char mpu9250_orientation;
+static unsigned char tap_count;
+static unsigned char tap_direction;
+static bool _tap_available;
+static void orient_cb(unsigned char orient);
+static void tap_cb(unsigned char direction, unsigned char count);
 
-static mpu9250_handle_t gs_handle;        /**< mpu9250 handle */
-
-/**
- * @brief     basic example init
- * @param[in] interface used interface
- * @param[in] addr_pin iic device address
- * @return    status code
- *            - 0 success
- *            - 1 init failed
- * @note      spi can't read magnetometer data
- */
-uint8_t mpu9250_basic_init(mpu9250_interface_t interface, mpu9250_address_t addr_pin)
+uint8_t MPU9250_constrain(uint8_t inp, uint8_t min, uint8_t max)
 {
-    uint8_t res;
-    
-    /* link interface function */
-    DRIVER_MPU9250_LINK_INIT(&gs_handle, mpu9250_handle_t);
-    DRIVER_MPU9250_LINK_IIC_INIT(&gs_handle, mpu9250_interface_iic_init);
-    DRIVER_MPU9250_LINK_IIC_DEINIT(&gs_handle, mpu9250_interface_iic_deinit);
-    DRIVER_MPU9250_LINK_IIC_READ(&gs_handle, mpu9250_interface_iic_read);
-    DRIVER_MPU9250_LINK_IIC_WRITE(&gs_handle, mpu9250_interface_iic_write);
-    DRIVER_MPU9250_LINK_SPI_INIT(&gs_handle, mpu9250_interface_spi_init);
-    DRIVER_MPU9250_LINK_SPI_DEINIT(&gs_handle, mpu9250_interface_spi_deinit);
-    DRIVER_MPU9250_LINK_SPI_READ(&gs_handle, mpu9250_interface_spi_read);
-    DRIVER_MPU9250_LINK_SPI_WRITE(&gs_handle, mpu9250_interface_spi_write);
-    DRIVER_MPU9250_LINK_DELAY_MS(&gs_handle, mpu9250_interface_delay_ms);
-    DRIVER_MPU9250_LINK_DEBUG_PRINT(&gs_handle, mpu9250_interface_debug_print);
-    DRIVER_MPU9250_LINK_RECEIVE_CALLBACK(&gs_handle, mpu9250_interface_receive_callback);
-    
-    /* set the interface */
-    res = mpu9250_set_interface(&gs_handle, interface);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set interface failed.\n");
-       
-        return 1;
-    }
-    
-    /* set the addr pin */
-    res = mpu9250_set_addr_pin(&gs_handle, addr_pin);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set addr pin failed.\n");
-       
-        return 1;
-    }
-    
-    /* init */
-    res = mpu9250_init(&gs_handle);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: init failed.\n");
-       
-        return 1;
-    }
-    
-    /* delay 100 ms */
-    mpu9250_interface_delay_ms(100);
-    
-    /* disable sleep */
-    res = mpu9250_set_sleep(&gs_handle, MPU9250_BOOL_FALSE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set sleep failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* if spi interface, disable iic interface */
-    if (interface == MPU9250_INTERFACE_SPI)
-    {
-        /* disable iic */
-        res = mpu9250_set_disable_iic_slave(&gs_handle, MPU9250_BOOL_TRUE);
-        if (res != 0)
-        {
-            mpu9250_interface_debug_print("mpu9250: set disable iic slave failed.\n");
-            (void)mpu9250_deinit(&gs_handle);
-           
-            return 1;
-        }
-    }
-    
-    /* set fifo 1024kb */
-    res = mpu9250_set_fifo_1024kb(&gs_handle);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set fifo 1024kb failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default clock source */
-    res = mpu9250_set_clock_source(&gs_handle, MPU9250_BASIC_DEFAULT_CLOCK_SOURCE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set clock source failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default rate */
-    res = mpu9250_set_sample_rate_divider(&gs_handle, (1000 / MPU9250_BASIC_DEFAULT_RATE) - 1);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set sample rate divider failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* enable temperature sensor */
-    res = mpu9250_set_ptat(&gs_handle, MPU9250_BOOL_TRUE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set ptat failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default cycle wake up */
-    res = mpu9250_set_cycle_wake_up(&gs_handle, MPU9250_BASIC_DEFAULT_CYCLE_WAKE_UP);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set cycle wake up failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* enable acc x */
-    res = mpu9250_set_standby_mode(&gs_handle, MPU9250_SOURCE_ACC_X, MPU9250_BOOL_FALSE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set standby mode failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* enable acc y */
-    res = mpu9250_set_standby_mode(&gs_handle, MPU9250_SOURCE_ACC_Y, MPU9250_BOOL_FALSE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set standby mode failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* enable acc z */
-    res = mpu9250_set_standby_mode(&gs_handle, MPU9250_SOURCE_ACC_Z, MPU9250_BOOL_FALSE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set standby mode failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* enable gyro x */
-    res = mpu9250_set_standby_mode(&gs_handle, MPU9250_SOURCE_GYRO_X, MPU9250_BOOL_FALSE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set standby mode failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* enable gyro y */
-    res = mpu9250_set_standby_mode(&gs_handle, MPU9250_SOURCE_GYRO_Y, MPU9250_BOOL_FALSE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set standby mode failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* enable gyro z */
-    res = mpu9250_set_standby_mode(&gs_handle, MPU9250_SOURCE_GYRO_Z, MPU9250_BOOL_FALSE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set standby mode failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* disable gyroscope x test */
-    res = mpu9250_set_gyroscope_test(&gs_handle, MPU9250_AXIS_X, MPU9250_BOOL_FALSE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set gyroscope test failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* disable gyroscope y test */
-    res = mpu9250_set_gyroscope_test(&gs_handle, MPU9250_AXIS_Y, MPU9250_BOOL_FALSE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set gyroscope test failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* disable gyroscope z test */
-    res = mpu9250_set_gyroscope_test(&gs_handle, MPU9250_AXIS_Z, MPU9250_BOOL_FALSE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set gyroscope test failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* disable accelerometer x test */
-    res = mpu9250_set_accelerometer_test(&gs_handle, MPU9250_AXIS_X, MPU9250_BOOL_FALSE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set accelerometer test failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* disable accelerometer y test */
-    res = mpu9250_set_accelerometer_test(&gs_handle, MPU9250_AXIS_Y, MPU9250_BOOL_FALSE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set accelerometer test failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* disable accelerometer z test */
-    res = mpu9250_set_accelerometer_test(&gs_handle, MPU9250_AXIS_Z, MPU9250_BOOL_FALSE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set accelerometer test failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* disable fifo */
-    res = mpu9250_set_fifo(&gs_handle, MPU9250_BOOL_FALSE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set fifo failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* disable temp fifo */
-    res = mpu9250_set_fifo_enable(&gs_handle, MPU9250_FIFO_TEMP, MPU9250_BOOL_FALSE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set fifo enable failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* disable xg fifo */
-    res = mpu9250_set_fifo_enable(&gs_handle, MPU9250_FIFO_XG, MPU9250_BOOL_FALSE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set fifo enable failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* disable yg fifo */
-    res = mpu9250_set_fifo_enable(&gs_handle, MPU9250_FIFO_YG, MPU9250_BOOL_FALSE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set fifo enable failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* disable zg fifo */
-    res = mpu9250_set_fifo_enable(&gs_handle, MPU9250_FIFO_ZG, MPU9250_BOOL_FALSE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set fifo enable failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* disable accel fifo */
-    res = mpu9250_set_fifo_enable(&gs_handle, MPU9250_FIFO_ACCEL, MPU9250_BOOL_FALSE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set fifo enable failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default interrupt level */
-    res = mpu9250_set_interrupt_level(&gs_handle, MPU9250_BASIC_DEFAULT_INTERRUPT_PIN_LEVEL);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set interrupt level failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default pin type */
-    res = mpu9250_set_interrupt_pin_type(&gs_handle, MPU9250_BASIC_DEFAULT_INTERRUPT_PIN_TYPE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set interrupt pin type failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default motion interrupt */
-    res = mpu9250_set_interrupt(&gs_handle, MPU9250_INTERRUPT_MOTION, MPU9250_BASIC_DEFAULT_INTERRUPT_MOTION);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set interrupt failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default fifo overflow interrupt */
-    res = mpu9250_set_interrupt(&gs_handle, MPU9250_INTERRUPT_FIFO_OVERFLOW, MPU9250_BASIC_DEFAULT_INTERRUPT_FIFO_OVERFLOW);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set interrupt failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default dmp interrupt */
-    res = mpu9250_set_interrupt(&gs_handle, MPU9250_INTERRUPT_DMP, MPU9250_BASIC_DEFAULT_INTERRUPT_DMP);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set interrupt failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default fsync int interrupt */
-    res = mpu9250_set_interrupt(&gs_handle, MPU9250_INTERRUPT_FSYNC_INT, MPU9250_BASIC_DEFAULT_INTERRUPT_FSYNC_INT);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set interrupt failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default data ready interrupt */
-    res = mpu9250_set_interrupt(&gs_handle, MPU9250_INTERRUPT_DATA_READY, MPU9250_BASIC_DEFAULT_INTERRUPT_DATA_READY);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set interrupt failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default interrupt latch */
-    res = mpu9250_set_interrupt_latch(&gs_handle, MPU9250_BASIC_DEFAULT_INTERRUPT_LATCH);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set interrupt latch failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default interrupt read clear */
-    res = mpu9250_set_interrupt_read_clear(&gs_handle, MPU9250_BASIC_DEFAULT_INTERRUPT_READ_CLEAR);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set interrupt read clear failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the extern sync */
-    res = mpu9250_set_extern_sync(&gs_handle, MPU9250_BASIC_DEFAULT_EXTERN_SYNC);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set extern sync failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default fsync interrupt */
-    res = mpu9250_set_fsync_interrupt(&gs_handle, MPU9250_BASIC_DEFAULT_FSYNC_INTERRUPT);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set fsync interrupt failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default fsync interrupt level */
-    res = mpu9250_set_fsync_interrupt_level(&gs_handle, MPU9250_BASIC_DEFAULT_FSYNC_INTERRUPT_LEVEL);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set fsync interrupt level failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default iic master */
-    res = mpu9250_set_iic_master(&gs_handle, MPU9250_BASIC_DEFAULT_IIC_MASTER);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set iic master failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default iic bypass */
-    res = mpu9250_set_iic_bypass(&gs_handle, MPU9250_BASIC_DEFAULT_IIC_BYPASS);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set iic bypass failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default accelerometer range */
-    res = mpu9250_set_accelerometer_range(&gs_handle, MPU9250_BASIC_DEFAULT_ACCELEROMETER_RANGE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set accelerometer range failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default gyroscope range */
-    res = mpu9250_set_gyroscope_range(&gs_handle, MPU9250_BASIC_DEFAULT_GYROSCOPE_RANGE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set gyroscope range failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default gyro standby */
-    res = mpu9250_set_gyro_standby(&gs_handle, MPU9250_BASIC_DEFAULT_GYROSCOPE_STANDBY);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set gyro standby failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default fifo mode */
-    res = mpu9250_set_fifo_mode(&gs_handle, MPU9250_BASIC_DEFAULT_FIFO_MODE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set fifo mode failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default gyroscope choice */
-    res = mpu9250_set_gyroscope_choice(&gs_handle, MPU9250_BASIC_DEFAULT_GYROSCOPE_CHOICE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set gyroscope choice failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default low pass filter */
-    res = mpu9250_set_low_pass_filter(&gs_handle, MPU9250_BASIC_DEFAULT_LOW_PASS_FILTER);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set low pass filter failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default accelerometer choice */
-    res = mpu9250_set_accelerometer_choice(&gs_handle, MPU9250_BASIC_DEFAULT_ACCELEROMETER_CHOICE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set accelerometer choice failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default accelerometer low pass filter */
-    res = mpu9250_set_accelerometer_low_pass_filter(&gs_handle, MPU9250_BASIC_DEFAULT_ACCELEROMETER_LOW_PASS_FILTER);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set accelerometer low pass filter failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default low power accel output rate */
-    res = mpu9250_set_low_power_accel_output_rate(&gs_handle, MPU9250_BASIC_DEFAULT_LOW_POWER_ACCEL_OUTPUT_RATE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set low power accel output rate failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default wake on motion */
-    res = mpu9250_set_wake_on_motion(&gs_handle, MPU9250_BASIC_DEFAULT_WAKE_ON_MOTION);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set wake on motion failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* set the default accel compare with previous sample */
-    res = mpu9250_set_accel_compare_with_previous_sample(&gs_handle, MPU9250_BASIC_DEFAULT_ACCELEROMETER_COMPARE);
-    if (res != 0)
-    {
-        mpu9250_interface_debug_print("mpu9250: set accel compare with previous sample failed.\n");
-        (void)mpu9250_deinit(&gs_handle);
-       
-        return 1;
-    }
-    
-    /* if iic interface */
-    if (interface == MPU9250_INTERFACE_IIC)
-    {
-        /* mag init */
-        res = mpu9250_mag_init(&gs_handle); 
-        if (res != 0)
-        {
-            mpu9250_interface_debug_print("mpu9250: mag init failed.\n");
-            (void)mpu9250_deinit(&gs_handle);
-           
-            return 1;
-        }
-        
-        /* set the mag default mode */
-        res = mpu9250_mag_set_mode(&gs_handle, MPU9250_BASIC_DEFAULT_MAGNETOMETER_MODE);
-        if (res != 0)
-        {
-            mpu9250_interface_debug_print("mpu9250: mag set mode failed.\n");
-            (void)mpu9250_mag_deinit(&gs_handle); 
-            (void)mpu9250_deinit(&gs_handle);
-           
-            return 1;
-        }
-        
-        /* set the mag default bits */
-        res = mpu9250_mag_set_bits(&gs_handle, MPU9250_BASIC_DEFAULT_MAGNETOMETER_BITS);
-        if (res != 0)
-        {
-            mpu9250_interface_debug_print("mpu9250: mag set bits failed.\n");
-            (void)mpu9250_mag_deinit(&gs_handle); 
-            (void)mpu9250_deinit(&gs_handle);
-           
-            return 1;
-        }
-    }
-    
-    return 0;
+	return inp < min ? min : (inp > max ? max : inp);
 }
 
-/**
- * @brief      basic example read temperature
- * @param[out] *degrees pointer to a converted data buffer
- * @return     status code
- *             - 0 success
- *             - 1 read temperature failed
- * @note       none
- */
-uint8_t mpu9250_basic_read_temperature(float *degrees)
+uint16_t MPU9250_constrainU16(uint16_t inp, uint16_t min, uint16_t max)
 {
-    int16_t raw;
-    
-    /* read temperature */
-    if (mpu9250_read_temperature(&gs_handle, &raw, degrees) != 0)
-    {
-        return 1;
-    }
-    
-    return 0;
+	return inp < min ? min : (inp > max ? max : inp);
 }
 
-/**
- * @brief      basic example read
- * @param[out] *g pointer to a converted data buffer
- * @param[out] *dps pointer to a converted data buffer
- * @param[out] *ut pointer to a converted data buffer
- * @return     status code
- *             - 0 success
- *             - 1 read failed
- * @note       none
- */
-uint8_t mpu9250_basic_read(float g[3], float dps[3], float ut[3])
+int MPU9250_DMP()
 {
-    uint16_t len;
-    int16_t accel_raw[3];
-    int16_t gyro_raw[3];
-    int16_t mag_raw[3];
-    float accel[3];
-    float gyro[3];
-    float mag[3];
-    
-    /* set 1 */
-    len = 1;
-    
-    /* read data */
-    if (mpu9250_read(&gs_handle,
-                    (int16_t (*)[3])&accel_raw, (float (*)[3])&accel,
-                    (int16_t (*)[3])&gyro_raw, (float (*)[3])&gyro,
-                    (int16_t (*)[3])&mag_raw, (float (*)[3])&mag,
-                     &len) != 0
-                    )
-    {
-        return 1;
-    }
-    
-    /* copy the data */
-    g[0] = accel[0];
-    g[1] = accel[1];
-    g[2] = accel[2];
-    dps[0] = gyro[0];
-    dps[1] = gyro[1];
-    dps[2] = gyro[2];
-    ut[0] = mag[0];
-    ut[1] = mag[1];
-    ut[2] = mag[2];
-    
-    return 0;
+	_mSense = 6.665f; // Constant - 4915 / 32760
+	_aSense = 0.0f;   // Updated after accel FSR is set
+	_gSense = 0.0f;   // Updated after gyro FSR is set
+	return 0;
 }
 
-/**
- * @brief  basic example deinit
- * @return status code
- *         - 0 success
- *         - 1 deinit failed
- * @note   none
- */
-uint8_t mpu9250_basic_deinit(void)
+inv_error_t MPU9250_begin(void)
 {
-    mpu9250_interface_t interface;
-    
-    /* get the interface */
-    if (mpu9250_get_interface(&gs_handle, &interface) != 0)
-    {
-        return 1;
-    }
-    
-    /* if interface iic*/
-    if (interface == MPU9250_INTERFACE_IIC)
-    {
-        /* mag deinit */
-        if (mpu9250_mag_deinit(&gs_handle) != 0)
-        {
-            return 1;
-        }
-    }
-    
-    /* deinit */
-    if (mpu9250_deinit(&gs_handle) != 0)
-    {
-        return 1;
-    }
-    
-    return 0;
+	inv_error_t result;
+	struct int_param_s int_param;
+
+	//	Wire.begin();
+
+	result = mpu_init(&int_param);
+
+	if (result)
+		return result;
+
+	mpu_set_bypass(1); // Place all slaves (including compass) on primary bus
+
+	MPU9250_setSensors(INV_XYZ_GYRO | INV_XYZ_ACCEL | INV_XYZ_COMPASS);
+
+	_gSense = MPU9250_getGyroSens();
+	_aSense = MPU9250_getAccelSens();
+
+	return result;
+}
+
+inv_error_t MPU9250_enableInterrupt(unsigned char enable)
+{
+	return set_int_enable(enable);
+}
+
+inv_error_t MPU9250_setIntLevel(unsigned char active_low)
+{
+	return mpu_set_int_level(active_low);
+}
+
+inv_error_t MPU9250_setIntLatched(unsigned char enable)
+{
+	return mpu_set_int_latched(enable);
+}
+
+short MPU9250_getIntStatus(void)
+{
+	short status;
+	if (mpu_get_int_status(&status) == INV_SUCCESS)
+	{
+		return status;
+	}
+	return 0;
+}
+
+// Accelerometer Low-Power Mode. Rate options:
+// 1.25 (1), 2.5 (2), 5, 10, 20, 40, 
+// 80, 160, 320, or 640 Hz
+// Disables compass and gyro
+inv_error_t MPU9250_lowPowerAccel(unsigned short rate)
+{
+	return mpu_lp_accel_mode(rate);
+}
+
+inv_error_t MPU9250_setGyroFSR(unsigned short fsr)
+{
+	inv_error_t err;
+	err = mpu_set_gyro_fsr(fsr);
+	if (err == INV_SUCCESS)
+	{
+		_gSense = MPU9250_getGyroSens();
+	}
+	return err;
+}
+
+inv_error_t MPU9250_setAccelFSR(unsigned char fsr)
+{
+	inv_error_t err;
+	err = mpu_set_accel_fsr(fsr);
+	if (err == INV_SUCCESS)
+	{
+		_aSense = MPU9250_getAccelSens();
+	}
+	return err;
+}
+
+unsigned short MPU9250_getGyroFSR(void)
+{
+	unsigned short tmp;
+	if (mpu_get_gyro_fsr(&tmp) == INV_SUCCESS)
+	{
+		return tmp;
+	}
+	return 0;
+}
+
+unsigned char MPU9250_getAccelFSR(void)
+{
+	unsigned char tmp;
+	if (mpu_get_accel_fsr(&tmp) == INV_SUCCESS)
+	{
+		return tmp;
+	}
+	return 0;
+}
+
+unsigned short MPU9250_getMagFSR(void)
+{
+	unsigned short tmp;
+	if (mpu_get_compass_fsr(&tmp) == INV_SUCCESS)
+	{
+		return tmp;
+	}
+	return 0;
+}
+
+inv_error_t MPU9250_setLPF(unsigned short lpf)
+{
+	return mpu_set_lpf(lpf);
+}
+
+unsigned short MPU9250_getLPF(void)
+{
+	unsigned short tmp;
+	if (mpu_get_lpf(&tmp) == INV_SUCCESS)
+	{
+		return tmp;
+	}
+	return 0;
+}
+
+inv_error_t MPU9250_setSampleRate(unsigned short rate)
+{
+	return mpu_set_sample_rate(rate);
+}
+
+unsigned short MPU9250_getSampleRate(void)
+{
+	unsigned short tmp;
+	if (mpu_get_sample_rate(&tmp) == INV_SUCCESS)
+	{
+		return tmp;
+	}
+	return 0;
+}
+
+inv_error_t MPU9250_setCompassSampleRate(unsigned short rate)
+{
+	return mpu_set_compass_sample_rate(rate);
+}
+
+unsigned short MPU9250_getCompassSampleRate(void)
+{
+	unsigned short tmp;
+	if (mpu_get_compass_sample_rate(&tmp) == INV_SUCCESS)
+	{
+		return tmp;
+	}
+
+	return 0;
+}
+
+float MPU9250_getGyroSens(void)
+{
+	float sens;
+	if (mpu_get_gyro_sens(&sens) == INV_SUCCESS)
+	{
+		return sens;
+	}
+	return 0;
+}
+
+unsigned short MPU9250_getAccelSens(void)
+{
+	unsigned short sens;
+	if (mpu_get_accel_sens(&sens) == INV_SUCCESS)
+	{
+		return sens;
+	}
+	return 0;
+}
+
+float MPU9250_getMagSens(void)
+{
+	return 0.15; // Static, 4915/32760
+}
+
+unsigned char MPU9250_getFifoConfig(void)
+{
+	unsigned char sensors;
+	if (mpu_get_fifo_config(&sensors) == INV_SUCCESS)
+	{
+		return sensors;
+	}
+	return 0;
+}
+
+inv_error_t MPU9250_configureFifo(unsigned char sensors)
+{
+	return mpu_configure_fifo(sensors);
+}
+
+inv_error_t MPU9250_resetFifo(void)
+{
+	return mpu_reset_fifo();
+}
+
+unsigned short MPU9250_fifoAvailable(void)
+{
+	unsigned char fifoH, fifoL;
+
+	if (mpu_read_reg(MPU9250_FIFO_COUNTH, &fifoH) != INV_SUCCESS)
+		return 0;
+	if (mpu_read_reg(MPU9250_FIFO_COUNTL, &fifoL) != INV_SUCCESS)
+		return 0;
+
+	return (fifoH << 8) | fifoL;
+}
+
+inv_error_t MPU9250_updateFifo(void)
+{
+	short gyro[3], accel[3];
+	unsigned long timestamp;
+	unsigned char sensors, more;
+
+	if (mpu_read_fifo(gyro, accel, &timestamp, &sensors, &more) != INV_SUCCESS)
+		return INV_ERROR;
+
+	if (sensors & INV_XYZ_ACCEL)
+	{
+		ax = accel[X_AXIS];
+		ay = accel[Y_AXIS];
+		az = accel[Z_AXIS];
+	}
+	if (sensors & INV_X_GYRO)
+		gx = gyro[X_AXIS];
+	if (sensors & INV_Y_GYRO)
+		gy = gyro[Y_AXIS];
+	if (sensors & INV_Z_GYRO)
+		gz = gyro[Z_AXIS];
+
+	time_inside = timestamp;
+
+	return INV_SUCCESS;
+}
+
+inv_error_t MPU9250_setSensors(unsigned char sensors)
+{
+	return mpu_set_sensors(sensors);
+}
+
+bool MPU9250_dataReady()
+{
+	unsigned char intStatusReg;
+
+	if (mpu_read_reg(MPU9250_INT_STATUS, &intStatusReg) == INV_SUCCESS)
+	{
+		return (intStatusReg & (1 << INT_STATUS_RAW_DATA_RDY_INT));
+	}
+	return false;
+}
+
+inv_error_t MPU9250_update(unsigned char sensors)
+{
+	inv_error_t aErr = INV_SUCCESS;
+	inv_error_t gErr = INV_SUCCESS;
+	inv_error_t mErr = INV_SUCCESS;
+	inv_error_t tErr = INV_SUCCESS;
+
+	if (sensors & UPDATE_ACCEL)
+		aErr = MPU9250_updateAccel();
+	if (sensors & UPDATE_GYRO)
+		gErr = MPU9250_updateGyro();
+	if (sensors & UPDATE_COMPASS)
+		mErr = MPU9250_updateCompass();
+	if (sensors & UPDATE_TEMP)
+		tErr = MPU9250_updateTemperature();
+
+	return aErr | gErr | mErr | tErr;
+}
+
+int MPU9250_updateAccel(void)
+{
+	short data[3];
+
+	if (mpu_get_accel_reg(data, &time_inside))
+	{
+		return INV_ERROR;
+	}
+	ax = data[X_AXIS];
+	ay = data[Y_AXIS];
+	az = data[Z_AXIS];
+	return INV_SUCCESS;
+}
+
+int MPU9250_updateGyro(void)
+{
+	short data[3];
+
+	if (mpu_get_gyro_reg(data, &time_inside))
+	{
+		return INV_ERROR;
+	}
+	gx = data[X_AXIS];
+	gy = data[Y_AXIS];
+	gz = data[Z_AXIS];
+	return INV_SUCCESS;
+}
+
+int MPU9250_updateCompass(void)
+{
+	short data[3];
+
+	if (mpu_get_compass_reg(data, &time_inside))
+	{
+		return INV_ERROR;
+	}
+	mx = data[X_AXIS];
+	my = data[Y_AXIS];
+	mz = data[Z_AXIS];
+	return INV_SUCCESS;
+}
+
+inv_error_t MPU9250_updateTemperature(void)
+{
+	return mpu_get_temperature(&temperature, &time_inside);
+}
+
+int MPU9250_selfTest(unsigned char debug)
+{
+	long gyro[3], accel[3];
+	return mpu_run_self_test(gyro, accel);
+}
+
+inv_error_t MPU9250_dmpBegin(unsigned short features, unsigned short fifoRate)
+{
+	unsigned short feat = features;
+	unsigned short rate = fifoRate;
+
+	if (MPU9250_dmpLoad() != INV_SUCCESS)
+		return INV_ERROR;
+
+	// 3-axis and 6-axis LP quat are mutually exclusive.
+	// If both are selected, default to 3-axis
+	if (feat & DMP_FEATURE_LP_QUAT)
+	{
+		feat &= ~(DMP_FEATURE_6X_LP_QUAT);
+		dmp_enable_lp_quat(1);
+	}
+	else if (feat & DMP_FEATURE_6X_LP_QUAT)
+		dmp_enable_6x_lp_quat(1);
+
+	if (feat & DMP_FEATURE_GYRO_CAL)
+		dmp_enable_gyro_cal(1);
+
+	if (MPU9250_dmpEnableFeatures(feat) != INV_SUCCESS)
+		return INV_ERROR;
+
+	rate = constrain(rate, 1, 200);
+	if (MPU9250_dmpSetFifoRate(rate) != INV_SUCCESS)
+		return INV_ERROR;
+
+	return mpu_set_dmp_state(1);
+}
+
+inv_error_t MPU9250_dmpLoad(void)
+{
+	return dmp_load_motion_driver_firmware();
+}
+
+unsigned short MPU9250_dmpGetFifoRate(void)
+{
+	unsigned short rate;
+	if (dmp_get_fifo_rate(&rate) == INV_SUCCESS)
+		return rate;
+
+	return 0;
+}
+
+inv_error_t MPU9250_dmpSetFifoRate(unsigned short rate)
+{
+	if (rate > MAX_DMP_SAMPLE_RATE) rate = MAX_DMP_SAMPLE_RATE;
+	return dmp_set_fifo_rate(rate);
+}
+
+inv_error_t MPU9250_dmpUpdateFifo(void)
+{
+	short gyro[3];
+	short accel[3];
+	long quat[4];
+	unsigned long timestamp;
+	short sensors;
+	unsigned char more;
+
+	if (dmp_read_fifo(gyro, accel, quat, &timestamp, &sensors, &more)
+		!= INV_SUCCESS)
+	{
+		return INV_ERROR;
+	}
+
+	if (sensors & INV_XYZ_ACCEL)
+	{
+		ax = accel[X_AXIS];
+		ay = accel[Y_AXIS];
+		az = accel[Z_AXIS];
+	}
+	if (sensors & INV_X_GYRO)
+		gx = gyro[X_AXIS];
+	if (sensors & INV_Y_GYRO)
+		gy = gyro[Y_AXIS];
+	if (sensors & INV_Z_GYRO)
+		gz = gyro[Z_AXIS];
+	if (sensors & INV_WXYZ_QUAT)
+	{
+		qw = quat[0];
+		qx = quat[1];
+		qy = quat[2];
+		qz = quat[3];
+	}
+
+	time_inside = timestamp;
+
+	return INV_SUCCESS;
+}
+
+inv_error_t MPU9250_dmpEnableFeatures(unsigned short mask)
+{
+	unsigned short enMask = 0;
+	enMask |= mask;
+	// Combat known issue where fifo sample rate is incorrect
+	// unless tap is enabled in the DMP.
+	enMask |= DMP_FEATURE_TAP;
+	return dmp_enable_feature(enMask);
+}
+
+unsigned short MPU9250_dmpGetEnabledFeatures(void)
+{
+	unsigned short mask;
+	if (dmp_get_enabled_features(&mask) == INV_SUCCESS)
+		return mask;
+	return 0;
+}
+
+inv_error_t MPU9250_dmpSetTap(
+	unsigned short xThresh, unsigned short yThresh, unsigned short zThresh,
+	unsigned char taps, unsigned short tapTime, unsigned short tapMulti)
+{
+	unsigned char axes = 0;
+	if (xThresh > 0)
+	{
+		axes |= TAP_X;
+		xThresh = constrainU16(xThresh, 1, 1600);
+		if (dmp_set_tap_thresh(1 << X_AXIS, xThresh) != INV_SUCCESS)
+			return INV_ERROR;
+	}
+	if (yThresh > 0)
+	{
+		axes |= TAP_Y;
+		yThresh = constrainU16(yThresh, 1, 1600);
+		if (dmp_set_tap_thresh(1 << Y_AXIS, yThresh) != INV_SUCCESS)
+			return INV_ERROR;
+	}
+	if (zThresh > 0)
+	{
+		axes |= TAP_Z;
+		zThresh = constrainU16(zThresh, 1, 1600);
+		if (dmp_set_tap_thresh(1 << Z_AXIS, zThresh) != INV_SUCCESS)
+			return INV_ERROR;
+	}
+	if (dmp_set_tap_axes(axes) != INV_SUCCESS)
+		return INV_ERROR;
+	if (dmp_set_tap_count(taps) != INV_SUCCESS)
+		return INV_ERROR;
+	if (dmp_set_tap_time(tapTime) != INV_SUCCESS)
+		return INV_ERROR;
+	if (dmp_set_tap_time_multi(tapMulti) != INV_SUCCESS)
+		return INV_ERROR;
+
+	dmp_register_tap_cb(tap_cb);
+
+	return INV_SUCCESS;
+}
+
+unsigned char MPU9250_getTapDir(void)
+{
+	_tap_available = false;
+	return tap_direction;
+}
+
+unsigned char MPU9250_getTapCount(void)
+{
+	_tap_available = false;
+	return tap_count;
+}
+
+bool MPU9250_tapAvailable(void)
+{
+	return _tap_available;
+}
+
+inv_error_t MPU9250_dmpSetOrientation(const signed char* orientationMatrix)
+{
+	unsigned short scalar;
+	scalar = MPU9250_orientation_row_2_scale(orientationMatrix);
+	scalar |= MPU9250_orientation_row_2_scale(orientationMatrix + 3) << 3;
+	scalar |= MPU9250_orientation_row_2_scale(orientationMatrix + 6) << 6;
+
+	dmp_register_android_orient_cb(orient_cb);
+
+	return dmp_set_orientation(scalar);
+}
+
+unsigned char MPU9250_dmpGetOrientation(void)
+{
+	return mpu9250_orientation;
+}
+
+inv_error_t MPU9250_dmpEnable3Quat(void)
+{
+	unsigned short dmpFeatures;
+
+	// 3-axis and 6-axis quat are mutually exclusive
+	dmpFeatures = dmpGetEnabledFeatures();
+	dmpFeatures &= ~(DMP_FEATURE_6X_LP_QUAT);
+	dmpFeatures |= DMP_FEATURE_LP_QUAT;
+
+	if (dmpEnableFeatures(dmpFeatures) != INV_SUCCESS)
+		return INV_ERROR;
+
+	return dmp_enable_lp_quat(1);
+}
+
+unsigned long MPU9250_dmpGetPedometerSteps(void)
+{
+	unsigned long steps;
+	if (dmp_get_pedometer_step_count(&steps) == INV_SUCCESS)
+	{
+		return steps;
+	}
+	return 0;
+}
+
+inv_error_t MPU9250_dmpSetPedometerSteps(unsigned long steps)
+{
+	return dmp_set_pedometer_step_count(steps);
+}
+
+unsigned long MPU9250_dmpGetPedometerTime(void)
+{
+	unsigned long walkTime;
+	if (dmp_get_pedometer_walk_time(&walkTime) == INV_SUCCESS)
+	{
+		return walkTime;
+	}
+	return 0;
+}
+
+inv_error_t MPU9250_dmpSetPedometerTime(unsigned long time_inside)
+{
+	return dmp_set_pedometer_walk_time(time_inside);
+}
+
+float MPU9250_calcAccel(int axis)
+{
+	if (_aSense != 0)
+		return (float)axis / (float)_aSense;
+	else
+		return 0;
+}
+
+float MPU9250_calcGyro(int axis)
+{
+	if (_gSense != 0)
+		return (float)axis / (float)_gSense;
+	else
+		return 0;
+}
+
+float MPU9250_calcMag(int axis)
+{
+	if (_mSense != 0)
+		return (float)axis / (float)_mSense;
+	else
+		return 0;
+}
+
+float MPU9250_calcQuat(long axis)
+{
+	return MPU9250_qToFloat(axis, 30);
+}
+
+float MPU9250_qToFloat(long number, unsigned char q)
+{
+	unsigned long mask = 0;
+	for (int i = 0; i < q; i++)
+	{
+		mask |= (1 << i);
+	}
+	return (number >> q) + ((number & mask) / (float)(2 << (q - 1)));
+}
+
+void MPU9250_computeEulerAngles(bool degrees)
+{
+	float dqw = MPU9250_qToFloat(qw, 30);
+	float dqx = MPU9250_qToFloat(qx, 30);
+	float dqy = MPU9250_qToFloat(qy, 30);
+	float dqz = MPU9250_qToFloat(qz, 30);
+
+	float ysqr = dqy * dqy;
+	float t0 = -2.0f * (ysqr + dqz * dqz) + 1.0f;
+	float t1 = +2.0f * (dqx * dqy - dqw * dqz);
+	float t2 = -2.0f * (dqx * dqz + dqw * dqy);
+	float t3 = +2.0f * (dqy * dqz - dqw * dqx);
+	float t4 = -2.0f * (dqx * dqx + ysqr) + 1.0f;
+
+	// Keep t2 within range of asin (-1, 1)
+	t2 = t2 > 1.0f ? 1.0f : t2;
+	t2 = t2 < -1.0f ? -1.0f : t2;
+
+	pitch_inside = asin(t2) * 2;
+	roll_inside = atan2(t3, t4);
+	yaw_inside = atan2(t1, t0);
+
+	if (degrees)
+	{
+		pitch_inside *= (180.0 / PI);
+		roll_inside *= (180.0 / PI);
+		yaw_inside *= (180.0 / PI);
+		if (pitch_inside < 0) pitch_inside = 360.0 + pitch_inside;
+		if (roll_inside < 0) roll_inside = 360.0 + roll_inside;
+		if (yaw_inside < 0) yaw_inside = 360.0 + yaw_inside;
+	}
+}
+
+float MPU9250_computeCompassHeading(void)
+{
+	if (my == 0)
+		heading = (mx < 0) ? PI : 0;
+	else
+		heading = atan2(mx, my);
+
+	if (heading > PI) heading -= (2 * PI);
+	else if (heading < -PI) heading += (2 * PI);
+	else if (heading < 0) heading += 2 * PI;
+
+	heading *= 180.0 / PI;
+
+	return heading;
+}
+
+unsigned short MPU9250_orientation_row_2_scale(const signed char* row)
+{
+	unsigned short b;
+
+	if (row[0] > 0)
+		b = 0;
+	else if (row[0] < 0)
+		b = 4;
+	else if (row[1] > 0)
+		b = 1;
+	else if (row[1] < 0)
+		b = 5;
+	else if (row[2] > 0)
+		b = 2;
+	else if (row[2] < 0)
+		b = 6;
+	else
+		b = 7;		// error
+	return b;
+}
+
+static void tap_cb(unsigned char direction, unsigned char count)
+{
+	_tap_available = true;
+	tap_count = count;
+	tap_direction = direction;
+}
+
+static void orient_cb(unsigned char orient)
+{
+	mpu9250_orientation = orient;
 }
