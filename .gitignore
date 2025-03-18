@@ -1,4 +1,10 @@
 *.bkp
 .metadata/
 
-Debug/*
+
+giantHornet_Main/Debug/*
+giantHornet_Main/giantHornet_Main Debug.launch
+giantHornet_FC/Debug/*
+giantHornet_FC/giantHornet_Main Debug.launch
+giantHornet_Controller/Debug/*
+giantHornet_Controller/giantHornet_Main Debug.launch

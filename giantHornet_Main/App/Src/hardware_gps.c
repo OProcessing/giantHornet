@@ -1,4 +1,4 @@
-#include "gps.h"
+#include "hardware_gps.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -6,7 +6,7 @@
 #define MAX_TOKEN 30
 #define MAX_BUFFER_SIZE 256
 #define UART_BUFFER_SIZE 512
-
+/*
 char uartBuffer[UART_BUFFER_SIZE] = 
     "$GPGGA,102723.328,3749.4919,N,12700.0078,E,1,03,7.9,28.0,M,19.6,M,0.0,0000*40\n"
     "$GPGSV,3,1,10,03,86,244,00,19,51,218,38,16,51,057,00,07,40,048,00*77\n"
@@ -184,5 +184,5 @@ float GPS_ConvertToDecimal(float nmea_coord, char direction) {
     }
     return decimal;
 }
-
+*/
 
