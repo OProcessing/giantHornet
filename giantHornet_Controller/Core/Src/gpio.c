@@ -46,10 +46,11 @@ void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
-  __HAL_RCC_GPIOD_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(D13_GPIO_Port, D13_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -57,27 +58,34 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : A2_Pin D13_Pin D12_Pin D11_Pin
-                           D7_Pin D8_Pin D2_Pin */
-  GPIO_InitStruct.Pin = A2_Pin|D13_Pin|D12_Pin|D11_Pin
-                          |D7_Pin|D8_Pin|D2_Pin;
+  /*Configure GPIO pins : SW_RX_Pin SW_TX_Pin A2_Pin D12_Pin
+                           BTN_JOY00_Pin BTN_CCW_Pin BTN_CW_Pin D2_Pin */
+  GPIO_InitStruct.Pin = SW_RX_Pin|SW_TX_Pin|A2_Pin|D12_Pin
+                          |BTN_JOY00_Pin|BTN_CCW_Pin|BTN_CW_Pin|D2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : D6_Pin D3_Pin D5_Pin D4_Pin
-                           D10_Pin D15_Pin D14_Pin */
-  GPIO_InitStruct.Pin = D6_Pin|D3_Pin|D5_Pin|D4_Pin
-                          |D10_Pin|D15_Pin|D14_Pin;
+  /*Configure GPIO pin : D13_Pin */
+  GPIO_InitStruct.Pin = D13_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(D13_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : BTN_DOWN_Pin D3_Pin BTN_UP_Pin D4_Pin
+                           BTN_DISCONNECT_Pin D15_Pin D14_Pin */
+  GPIO_InitStruct.Pin = BTN_DOWN_Pin|D3_Pin|BTN_UP_Pin|D4_Pin
+                          |BTN_DISCONNECT_Pin|D15_Pin|D14_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : D9_Pin */
-  GPIO_InitStruct.Pin = D9_Pin;
+  /*Configure GPIO pin : BTN_EMERGENCY_Pin */
+  GPIO_InitStruct.Pin = BTN_EMERGENCY_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(D9_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(BTN_EMERGENCY_GPIO_Port, &GPIO_InitStruct);
 
 }
 
