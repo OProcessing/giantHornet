@@ -25,6 +25,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "hardware_controller.h"
+#include "hardware_lora.h"
+#include "function_controller.h"
 
 /* USER CODE END Includes */
 
