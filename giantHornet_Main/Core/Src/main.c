@@ -104,6 +104,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  static uint16_t hello_world = 0;
+	  hello_world++;
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
