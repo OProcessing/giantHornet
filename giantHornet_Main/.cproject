@@ -50,6 +50,7 @@
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Device/ST/STM32F4xx/Include"/>
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/library}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/library/Inc}&quot;"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.1477646757" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c"/>
 							</tool>
@@ -179,6 +180,7 @@
 	</storageModule>
 	<storageModule moduleId="refreshScope" versionNumber="2">
 		<configuration configurationName="Debug">
+			<resource resourceType="PROJECT" workspacePath="/library"/>
 			<resource resourceType="PROJECT" workspacePath="/giantHornet_Main"/>
 		</configuration>
 		<configuration configurationName="Release">

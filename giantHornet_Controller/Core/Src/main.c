@@ -28,7 +28,7 @@
 #include "hardware_controller.h"
 #include "hardware_lora.h"
 #include "function_controller.h"
-
+#include "define.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

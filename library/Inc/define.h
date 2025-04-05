@@ -69,7 +69,7 @@ typedef enum
     USER_RET_ERR_COMMUNICATION_FAIL  	= 0x01U << 2,
     USER_RET_ERR_TIMEOUT             	= 0x01U << 3,
     USER_RET_ERR_HW_FAILURE          	= 0x01U << 4,
-    USER_RET_ERR_MEMORY_FAILURE      	= 0x01U << 5
+    USER_RET_ERR_MEMORY_FAILURE      	= 0x01U << 5,
     USER_RET_ERR_UNSUPPORTED         	= 0x01U << 6,
     USER_RET_ERR_NO_RESOURCE         	= 0x01U << 7,
     USER_RET_ERR_UNKNOWN             	= 0x01U << 8,
