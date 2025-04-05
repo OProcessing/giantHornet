@@ -26,7 +26,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "define.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
