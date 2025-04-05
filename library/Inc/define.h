@@ -11,6 +11,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define TRUE  1
+#define FALSE 0
+
 #define LOG_TRACE   0
 #define LOG_DEBUG   1
 #define LOG_INFO    2
@@ -29,7 +32,7 @@
      (level) == LOG_WARN  ? "WARN"  : \
      (level) == LOG_ERROR ? "ERROR" : \
      (level) == LOG_FATAL ? "FATAL" : "UNKNOWN")
-
+/*
 #define log(level, fmt, ...)                                          \
     do {                                                              \
         if (level >= LOG_LEVEL) {                                     \
@@ -38,7 +41,7 @@
                    ##__VA_ARGS__, __DATE__, __TIME__);                \
         }                                                             \
     } while(0)
-
+*/
 /*
 int calculate_sum(int *arr, int size) {
     int sum = 0;
