@@ -26,11 +26,13 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "define.h"
-#include "hardware_imu.h"
 #include "stdlib.h"
 #include "string.h"
 #include "stdio.h"
 #include "math.h"
+
+#include "hardware_imu.h"
+#include "bmp280.h"
 
 /* USER CODE END Includes */
 
@@ -54,6 +56,12 @@
 /* USER CODE BEGIN PV */
 uint8_t serialBuf[100];
 MPU9250_t MPU9250;
+BMP280_HandleTypedef bmp280;
+
+float pressure, temperature, humidity;
+
+uint16_t size;
+uint8_t Data[256];
 
 /* USER CODE END PV */
 
@@ -108,6 +116,7 @@ int main(void)
 	MX_USART3_UART_Init();
 	/* USER CODE BEGIN 2 */
 
+  // IMU initial function
   // Check if IMU configured properly and block if it didn't
   if (MPU_begin(&hspi2, &MPU9250) != TRUE)
   {
@@ -120,6 +129,20 @@ int main(void)
   sprintf((char *)serialBuf, "CALIBRATING...\r\n");
   HAL_UART_Transmit(&huart2, serialBuf, strlen((char *)serialBuf), HAL_MAX_DELAY);
   MPU_calibrateGyro(&hspi2, &MPU9250, 1500);
+  // IMU Process end
+
+  bmp280_init_default_params(&bmp280.params);
+	bmp280.addr = BMP280_I2C_ADDRESS_0;
+	bmp280.i2c = &hi2c1;
+
+	while (!bmp280_init(&bmp280, &bmp280.params)) {
+		size = sprintf((char *)Data, "BMP280 initialization failed\n");
+		HAL_UART_Transmit(&huart1, Data, size, 1000);
+		HAL_Delay(2000);
+	}
+	bool bme280p = bmp280.id == BME280_CHIP_ID;
+	size = sprintf((char *)Data, "BMP280: found %s\n", bme280p ? "BME280" : "BMP280");
+	HAL_UART_Transmit(&huart1, Data, size, 1000);
 
   // Start timer and put processor into an efficient low power mode
   //HAL_TIM_Base_Start_IT(&htim11);
