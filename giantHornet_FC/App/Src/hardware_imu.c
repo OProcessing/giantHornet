@@ -1,3 +1,4 @@
+/*
 #include "MPU9250-DMP.h"
 #include "math.h"
 
@@ -702,3 +703,5 @@ static void orient_cb(unsigned char orient)
 {
 	mpu9250_orientation = orient;
 }
+
+*/
