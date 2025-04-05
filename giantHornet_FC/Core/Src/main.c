@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "i2c.h"
 #include "sdio.h"
 #include "spi.h"
 #include "usart.h"
@@ -32,7 +33,7 @@
 #include "math.h"
 
 #include "hardware_imu.h"
-#include "bmp280.h"
+#include "hardware_altitude.h"
 
 /* USER CODE END Includes */
 
@@ -100,21 +101,24 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 
-  /* USER CODE END Init */\
+  /* USER CODE END Init */
+
+  /* Configure the system clock */
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
 
-	/* Initialize all configured peripherals */
-	MX_GPIO_Init();
-	MX_USART2_UART_Init();
-	//MX_SDIO_SD_Init();
-	MX_SPI2_Init();
-	MX_SPI3_Init();
-	MX_USART3_UART_Init();
-	/* USER CODE BEGIN 2 */
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_USART2_UART_Init();
+  //MX_SDIO_SD_Init();
+  MX_SPI2_Init();
+  MX_SPI3_Init();
+  MX_USART3_UART_Init();
+  MX_I2C1_Init();
+  /* USER CODE BEGIN 2 */
 
   // IMU initial function
   // Check if IMU configured properly and block if it didn't
@@ -137,12 +141,12 @@ int main(void)
 
 	while (!bmp280_init(&bmp280, &bmp280.params)) {
 		size = sprintf((char *)Data, "BMP280 initialization failed\n");
-		HAL_UART_Transmit(&huart1, Data, size, 1000);
+		HAL_UART_Transmit(&huart2, Data, size, 1000);
 		HAL_Delay(2000);
 	}
 	bool bme280p = bmp280.id == BME280_CHIP_ID;
 	size = sprintf((char *)Data, "BMP280: found %s\n", bme280p ? "BME280" : "BMP280");
-	HAL_UART_Transmit(&huart1, Data, size, 1000);
+	HAL_UART_Transmit(&huart2, Data, size, 1000);
 
   // Start timer and put processor into an efficient low power mode
   //HAL_TIM_Base_Start_IT(&htim11);
@@ -152,11 +156,17 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  float roll;
   while (1)
   {
     /* USER CODE END WHILE */
 	  MPU_readProcessedData(&hspi2, &MPU9250);
+    HAL_Delay(100);
+		while (!bmp280_read_float(&bmp280, &temperature, &pressure, &humidity)) {
+			size = sprintf((char *)Data,
+					"Temperature/pressure reading failed\n");
+			HAL_UART_Transmit(&huart2, Data, size, 1000);
+			HAL_Delay(2000);
+		}
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

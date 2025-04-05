@@ -26,7 +26,7 @@
  * THE SOFTWARE.
  */
 
- #include "bmp280.h"
+ #include "hardware_altitude.h"
 
  /**
   * BMP280 registers
@@ -80,6 +80,7 @@
      uint16_t tx_buff;
      tx_buff = (dev->addr << 1);
      if (HAL_I2C_Mem_Read(dev->i2c, tx_buff, addr, 1, value, len, 5000) == HAL_OK)
+
          return 0;
      else
          return 1;
