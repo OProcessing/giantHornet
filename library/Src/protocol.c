@@ -1,12 +1,15 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include "protocol.h"
 
 #define MAX_PAYLOAD_LENGTH 50
 #define PACKET_HEADER  0xA840  // '¿' '@'
 #define PACKET_TAIL    0x3F    // '?'
 
 #pragma pack(push, 1)
+
+uint8_t data_ptr[MAX_PAYLOAD_LENGTH] = {0};
 typedef struct {
     uint16_t    header;
     uint32_t    timestamp;
@@ -14,7 +17,7 @@ typedef struct {
     uint8_t     type;
     uint8_t     action;
     uint8_t     data_length;
-    uint8_t     data[MAX_PAYLOAD_LENGTH];
+    uint8_t     *data_ptr;
     uint8_t     tail;
 } packet_log_t;
 
@@ -23,7 +26,7 @@ typedef struct {
     uint8_t     type;
     uint8_t     action;
     uint8_t     data_length;
-    uint8_t     data[MAX_PAYLOAD_LENGTH];
+    uint8_t     *data_ptr;
     uint8_t     checksum;
     uint8_t     tail;
 } packet_comm_t;
@@ -62,7 +65,7 @@ void create_packet_log(packet_log_t *packet, uint8_t type, uint8_t action, uint8
     packet->type = type;
     packet->action = action;
     packet->data_length = length;
-    memcpy(packet->data, data, length);
+    memcpy(packet->data_ptr, data, length);
     packet->tail = PACKET_TAIL;
 }
 
@@ -71,6 +74,6 @@ void create_packet_Tx(packet_log_t *packet, uint8_t type, uint8_t action, uint8_
     packet->type = type;
     packet->action = action;
     packet->data_length = length;
-    memcpy(packet->data, data, length);
+    memcpy(packet->data_ptr, data, length);
     packet->tail = PACKET_TAIL;
 }
