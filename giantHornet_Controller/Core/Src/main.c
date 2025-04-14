@@ -103,9 +103,12 @@ int main(void)
   MX_SPI2_Init();
   MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
-  controller_init();
-  lora_init(LORA_MASTER);
-  printf("hello world!\n");
+  USER_StatusTypeDef ret = controller_init();
+  if(ret == USER_RET_OK) {
+    printf("init seq ok!");
+  } else {
+    printf("init seq error! %d", ret);
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -113,7 +116,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	controller_task();
+    controller_task();
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

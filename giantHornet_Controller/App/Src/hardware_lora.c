@@ -1,13 +1,13 @@
 #include "hardware_lora.h"
 
-void lora_init(void) {
-
+USER_StatusTypeDef lora_init(void) {
+    return USER_RET_OK;
 }
 
-void lora_send(void) {
-
+USER_StatusTypeDef lora_send(void) {
+    return USER_RET_OK;
 }
 
-void lora_recv(void) {
-
+USER_StatusTypeDef lora_recv(void) {
+    return USER_RET_OK;
 }
