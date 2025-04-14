@@ -1,3 +1,6 @@
+#ifndef INC_DEFINE_H_
+#define INC_DEFINE_H_
+
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
 #include <stdbool.h>
@@ -71,3 +74,5 @@ typedef enum
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
 /* USER CODE END PFP */
+
+#endif /* INC_DEFINE_H_ */
