@@ -3,6 +3,8 @@
 #include <string.h>
 #include "protocol.h"
 
+uint8_t data_ptr[MAX_PAYLOAD_LENGTH];
+
 uint8_t calculate_checksum(uint8_t *data, uint8_t length) {
     uint8_t checksum = 0;
     for (uint8_t i = 0; i < length; i++) {
