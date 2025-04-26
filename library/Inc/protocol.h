@@ -7,9 +7,9 @@
 #define PACKET_HEADER  0xA840  // '¿' '@'
 #define PACKET_TAIL    0x3F    // '?'
 
-#pragma pack(push, 1)
+extern uint8_t data_ptr[];
 
-uint8_t data_ptr[MAX_PAYLOAD_LENGTH] = {0};
+#pragma pack(push, 1)
 typedef struct {
     uint16_t    header;
     uint32_t    timestamp;
