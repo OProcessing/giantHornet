@@ -1,7 +1,7 @@
 #ifndef INC_HARDWARE_LORA_H_
 #define INC_HARDWARE_LORA_H_
 
-#include <cstddef>
+#include "stdlib.h"
 #include "define.h"
 
 USER_StatusTypeDef lora_init(void);
