@@ -206,13 +206,13 @@ int SX1278_LoRaEntryTx(SX1278_t *module, uint8_t length, uint32_t timeout) {
 		temp = SX1278_SPIRead(module, LR_RegPayloadLength);
 		if (temp == length) {
 			module->status = TX;
-			return 1;
+			return 0;
 		}
 
 		if (--timeout == 0) {
 			SX1278_hw_Reset(module->hw);
 			SX1278_config(module);
-			return 0;
+			return -1;
 		}
 	}
 }
@@ -226,13 +226,13 @@ int SX1278_LoRaTxPacket(SX1278_t *module, uint8_t *txBuffer, uint8_t length,
 			SX1278_SPIRead(module, LR_RegIrqFlags);
 			SX1278_clearLoRaIrq(module); //Clear irq
 			SX1278_standby(module); //Entry Standby mode
-			return 1;
+			return 0;
 		}
 
 		if (--timeout == 0) {
 			SX1278_hw_Reset(module->hw);
 			SX1278_config(module);
-			return 0;
+			return -1;
 		}
 		SX1278_hw_DelayMs(1);
 	}

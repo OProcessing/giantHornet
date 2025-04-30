@@ -27,7 +27,7 @@ USER_StatusTypeDef lora_init(uint8_t master_enable) {
 		ret = SX1278_LoRaEntryRx(&SX1278, 16, 2000);
 	}
 
-	if(ret == 0) {
+	if(ret < 0) {
 		return USER_RET_ERR_HW_FAILURE;
 	} else {
 		return USER_RET_OK;
