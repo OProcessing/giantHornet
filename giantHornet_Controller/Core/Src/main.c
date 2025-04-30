@@ -85,8 +85,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  controller_init();
-  lora_init();
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -108,6 +107,7 @@ int main(void)
     printf("init seq ok!");
   } else {
     printf("init seq error! %d", ret);
+    Error_Handler();
   }
   /* USER CODE END 2 */
 
@@ -116,7 +116,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-    controller_task();
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

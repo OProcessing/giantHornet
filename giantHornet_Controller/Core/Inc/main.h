@@ -84,8 +84,12 @@ void Error_Handler(void);
 #define A3_GPIO_Port GPIOB
 #define BTN_DOWN_Pin GPIO_PIN_10
 #define BTN_DOWN_GPIO_Port GPIOB
+#define LORA_NSS_Pin GPIO_PIN_12
+#define LORA_NSS_GPIO_Port GPIOB
 #define BTN_EMERGENCY_Pin GPIO_PIN_7
 #define BTN_EMERGENCY_GPIO_Port GPIOC
+#define LORA_DIO0_Pin GPIO_PIN_9
+#define LORA_DIO0_GPIO_Port GPIOC
 #define BTN_CCW_Pin GPIO_PIN_8
 #define BTN_CCW_GPIO_Port GPIOA
 #define BTN_CW_Pin GPIO_PIN_9
@@ -96,6 +100,8 @@ void Error_Handler(void);
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
 #define TCK_GPIO_Port GPIOA
+#define LORA_RST_Pin GPIO_PIN_15
+#define LORA_RST_GPIO_Port GPIOA
 #define D3_Pin GPIO_PIN_3
 #define D3_GPIO_Port GPIOB
 #define BTN_UP_Pin GPIO_PIN_4

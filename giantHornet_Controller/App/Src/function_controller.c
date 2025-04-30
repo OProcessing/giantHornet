@@ -19,7 +19,7 @@ USER_StatusTypeDef controller_init(void) {
         return ret;
     }
 
-    ret = lora_init();
+    ret = lora_init(1);
     if(ret != USER_RET_OK) {
         printf("lora init error! %d", ret);
     }
