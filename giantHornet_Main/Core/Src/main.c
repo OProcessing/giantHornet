@@ -37,7 +37,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define RX_BUFFER_SIZE  256
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -48,7 +48,9 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t rx_data;
+uint8_t rx_buffer[RX_BUFFER_SIZE];
+uint16_t rx_index = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -59,7 +61,39 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+//* @brief  Retargets the C library printf function to the USART.
+int _write(int fd, char *ptr, int len)
+{
+  HAL_UART_Transmit(&huart2, (const uint8_t *)ptr, len, 100);
+  return len;
+}
 
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART1)
+    {
+        if (rx_index < RX_BUFFER_SIZE - 1)
+        {
+            
+            rx_buffer[rx_index++] = rx_data;
+
+            if (rx_data == '\n') // 한 줄 끝나면
+            {
+                rx_buffer[rx_index] = '\0'; // 문자열 종료
+                printf("%s", rx_buffer);    // 받은 라인 출력
+                rx_index = 0;               // 인덱스 초기화
+            }
+        }
+        else
+        {
+            // 버퍼 오버플로우 대비
+            rx_index = 0;
+        }
+
+        HAL_UART_Receive_IT(&huart1, &rx_data, 1);  // 다시 수신
+    }
+}
 /* USER CODE END 0 */
 
 /**
@@ -99,14 +133,14 @@ int main(void)
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
 
+  printf("NiHao World\r\n");
+  HAL_UART_Receive_IT(&huart1, &rx_data, 1);  // 인터럽트 기반 수신 시작
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  static uint16_t hello_world = 0;
-	  hello_world++;
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
