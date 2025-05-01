@@ -115,9 +115,9 @@ int main(void)
   MX_USART2_UART_Init();
   //MX_SDIO_SD_Init();
   MX_SPI2_Init();
-  MX_SPI3_Init();
   MX_USART3_UART_Init();
   MX_I2C1_Init();
+  MX_I2C3_Init();
   /* USER CODE BEGIN 2 */
 
   // IMU initial function
@@ -137,7 +137,7 @@ int main(void)
 
   bmp280_init_default_params(&bmp280.params);
 	bmp280.addr = BMP280_I2C_ADDRESS_0;
-	bmp280.i2c = &hi2c1;
+	bmp280.i2c = &hi2c3;
 
 	while (!bmp280_init(&bmp280, &bmp280.params)) {
 		size = sprintf((char *)Data, "BMP280 initialization failed\n");
@@ -159,14 +159,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  MPU_readProcessedData(&hspi2, &MPU9250);
-    HAL_Delay(100);
-		while (!bmp280_read_float(&bmp280, &temperature, &pressure, &humidity)) {
-			size = sprintf((char *)Data,
-					"Temperature/pressure reading failed\n");
-			HAL_UART_Transmit(&huart2, Data, size, 1000);
-			HAL_Delay(2000);
-		}
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
