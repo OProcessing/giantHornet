@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "adc.h"
+#include "dma.h"
 #include "spi.h"
 #include "usart.h"
 #include "gpio.h"
@@ -97,6 +98,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_ADC1_Init();
   MX_SPI2_Init();
@@ -116,8 +118,9 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  controller_task();
+
     /* USER CODE BEGIN 3 */
+    controller_task();
   }
   /* USER CODE END 3 */
 }
