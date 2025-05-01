@@ -89,8 +89,8 @@ int main(void)
   MPU9250.settings.aFullScaleRange = AFSR_4G;
   MPU9250.settings.CS_PIN = GPIO_PIN_13;
   MPU9250.settings.CS_PORT = GPIOB;
-  MPU9250.attitude.tau = 0.98;
-  MPU9250.attitude.dt = 0.004;
+  MPU9250.attitude.tau = 0.99;
+  MPU9250.attitude.dt = 0.0005;
 
   /* USER CODE END 1 */
 
@@ -134,7 +134,7 @@ int main(void)
   HAL_UART_Transmit(&huart2, serialBuf, strlen((char *)serialBuf), HAL_MAX_DELAY);
   MPU_calibrateGyro(&hspi2, &MPU9250, 1500);
   // IMU Process end
-
+  /*
   bmp280_init_default_params(&bmp280.params);
 	bmp280.addr = BMP280_I2C_ADDRESS_0;
 	bmp280.i2c = &hi2c3;
@@ -147,7 +147,7 @@ int main(void)
 	bool bme280p = bmp280.id == BME280_CHIP_ID;
 	size = sprintf((char *)Data, "BMP280: found %s\n", bme280p ? "BME280" : "BMP280");
 	HAL_UART_Transmit(&huart2, Data, size, 1000);
-
+   */
   // Start timer and put processor into an efficient low power mode
   //HAL_TIM_Base_Start_IT(&htim11);
   //HAL_PWR_EnableSleepOnExit();
@@ -159,6 +159,8 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+	  MPU_calcAttitude(&hspi2, &MPU9250);
+	  HAL_Delay(40);
 
     /* USER CODE BEGIN 3 */
   }
