@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "function_motor_control_pid.h": "c",
+        "define.h": "c",
+        "function_flight_control.h": "c"
+    }
+}
