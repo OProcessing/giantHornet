@@ -68,32 +68,6 @@ int _write(int fd, char *ptr, int len)
   return len;
 }
 
-
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-    if (huart->Instance == USART1)
-    {
-        if (rx_index < RX_BUFFER_SIZE - 1)
-        {
-            
-            rx_buffer[rx_index++] = rx_data;
-
-            if (rx_data == '\n') // 한 줄 끝나면
-            {
-                rx_buffer[rx_index] = '\0'; // 문자열 종료
-                printf("%s", rx_buffer);    // 받은 라인 출력
-                rx_index = 0;               // 인덱스 초기화
-            }
-        }
-        else
-        {
-            // 버퍼 오버플로우 대비
-            rx_index = 0;
-        }
-
-        HAL_UART_Receive_IT(&huart1, &rx_data, 1);  // 다시 수신
-    }
-}
 /* USER CODE END 0 */
 
 /**
@@ -125,16 +99,16 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_USART1_UART_Init();
   MX_USART2_UART_Init();
+  MX_USART3_UART_Init();
   MX_ADC1_Init();
   MX_SPI2_Init();
   MX_TIM2_Init();
-  MX_USART1_UART_Init();
-  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
 
   printf("NiHao World\r\n");
-  HAL_UART_Receive_IT(&huart1, &rx_data, 1);  // 인터럽트 기반 수신 시작
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -142,7 +116,10 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+	  serial_status = HAL_UART_Receive(&huart1, buffer, 1, 100);
+	  if (serial_status == HAL_OK) {
+		  HAL_UART_Transmit(&huart2, buffer, 1, 100);
+	  }
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
