@@ -114,7 +114,11 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
+<<<<<<< Updated upstream
   //MX_SDIO_SD_Init();
+=======
+  MX_SDIO_SD_Init();
+>>>>>>> Stashed changes
   MX_SPI2_Init();
   MX_USART3_UART_Init();
   MX_I2C1_Init();
@@ -125,7 +129,7 @@ int main(void)
   // IMU initial function
   // Check if IMU configured properly and block if it didn't
   if (MPU_begin(&hspi2, &MPU9250) != TRUE)
-  {
+  {]]
     sprintf((char *)serialBuf, "ERROR!\r\n");
     HAL_UART_Transmit(&huart2, serialBuf, strlen((char *)serialBuf), HAL_MAX_DELAY);
     while (1){}
@@ -161,8 +165,11 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+<<<<<<< Updated upstream
 	  MPU_calcAttitude(&hspi2, &MPU9250);
 	  HAL_Delay(40);
+=======
+>>>>>>> Stashed changes
 
     /* USER CODE BEGIN 3 */
   }
