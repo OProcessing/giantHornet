@@ -1,51 +1,82 @@
 #include "define.h"
 #include "hardware_gps.h"
+#include "ring_buffer.h"
 
 static UART_HandleTypeDef *gps_huart;
 
-static uint8_t rx_data;
-static char rx_buffer[GPS_BUFFER_SIZE];
-static int rx_index = 0;
+uint8_t gps_rx_byte = 0;
+uint8_t gps_rx_buffer[GPS_BUFFER_SIZE];
+char gps_sentence_buffer[GPS_BUFFER_SIZE];
+
 
 GPS_t GPS;
+RingBuffer gps_RingBuffer;
+
+extern void RingBuffer_Init(RingBuffer *rb, uint8_t *buf, uint16_t size);
 
 void GPS_Init(UART_HandleTypeDef *huart) 
 {
     gps_huart = huart;
-    GPS_Clear();
-    HAL_UART_Receive_IT(gps_huart, &rx_data, 1);
+    GPS_data_init();
+    RingBuffer_Init(&gps_RingBuffer, (uint8_t *)gps_rx_buffer, GPS_BUFFER_SIZE);
+    HAL_UART_Receive_IT(gps_huart, &gps_rx_byte, 1);
 }
 
-void GPS_Clear(void) 
+void GPS_buffer_clear(void) 
+{
+    memset(gps_sentence_buffer, 0, sizeof(gps_sentence_buffer));
+}
+
+void GPS_data_init(void) 
 {
     memset(&GPS, 0, sizeof(GPS));
 }
 
-void GPS_UART_Callback(void) 
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-    if (rx_data != '\n' && rx_index < GPS_BUFFER_SIZE - 1) 
+    if (huart == gps_huart)
     {
-        rx_buffer[rx_index++] = rx_data; 
-    } 
-    else 
-    {
-        rx_buffer[rx_index] = '\0'; 
-        if (GPS_Validate_Checksum(rx_buffer)) 
-        { 
-            GPS_ParseNMEA(rx_buffer);         
-        }
-        rx_index = 0;
+        RingBuffer_Put(&gps_RingBuffer, gps_rx_byte); 
+        HAL_UART_Receive_IT(gps_huart, &gps_rx_byte, 1);
     }
-    HAL_UART_Receive_IT(gps_huart, &rx_data, 1);
+}
+
+void GPS_UART_Callback(void)
+{
+    static uint16_t gps_buffer_index = 0;
+    uint8_t data;
+
+    while (RingBuffer_Get(&gps_RingBuffer, &data)) 
+    {
+        if (data == '\r') 
+        {
+            gps_sentence_buffer[gps_buffer_index] = '\0';
+            gps_buffer_index = 0;
+
+            if (GPS_Validate_Checksum(gps_sentence_buffer) == 0) 
+            {
+                GPS_ParseNMEA(gps_sentence_buffer);
+            }
+            GPS_buffer_clear();
+        } 
+        else 
+        {
+            gps_sentence_buffer[gps_buffer_index++] = data;
+            if (gps_buffer_index >= GPS_BUFFER_SIZE) 
+            {
+                gps_buffer_index = 0;
+            }
+        }
+    }
 }
 
 int GPS_isValid(void)
 {
     if (GPS.status.fix_status == 1 && GPS.status.satellites >= 3) 
     {
-        return 0; // 유효한 GPS 데이터
+        return 0; // valid
     }
-    return -1; // 유효하지 않음
+    return -1; // invalid
 }
 
 float GPS_ConvertToDecimal(float nmea_coord, char direction)
@@ -114,6 +145,7 @@ int GPS_ParseNMEA(char *nmea)
         default: break;
 
     }
+    GPS_DebugPrint();
     return ret;
 }
 

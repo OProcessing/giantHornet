@@ -3,7 +3,7 @@
 
 #include "stm32f4xx_hal.h"
 
-#define GPS_BUFFER_SIZE 128
+#define GPS_BUFFER_SIZE 1024
 
 typedef struct {
     struct {
@@ -40,7 +40,9 @@ typedef enum {
 } NMEA_Type;
 
 void GPS_Init(UART_HandleTypeDef *huart);
-void GPS_Clear(void);
+void GPS_buffer_clear(void);
+void GPS_data_init(void);
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
 void GPS_UART_Callback(void);
 int GPS_isValid(void);
 float GPS_ConvertToDecimalDegrees(float degrees, char direction);

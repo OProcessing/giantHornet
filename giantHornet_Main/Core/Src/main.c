@@ -27,6 +27,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "define.h"
+#include "hardware_gps.h"
+#include "usart.h"
 
 /* USER CODE END Includes */
 
@@ -48,9 +50,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-uint8_t rx_data;
-uint8_t rx_buffer[RX_BUFFER_SIZE];
-uint16_t rx_index = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -105,21 +105,19 @@ int main(void)
   MX_TIM2_Init();
   MX_USART1_UART_Init();
   MX_USART3_UART_Init();
+  HAL_Delay(50);
   /* USER CODE BEGIN 2 */
-
-  printf("NiHao World\r\n");
-
+  GPS_Init(&huart1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    GPS_UART_Callback();
+    HAL_Delay(100);
     /* USER CODE END WHILE */
-	  int serial_status = HAL_UART_Receive(&huart1, rx_buffer, 1, 100);
-	  if (serial_status == HAL_OK) {
-		  HAL_UART_Transmit(&huart2, rx_buffer, 1, 100);
-	  }
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
