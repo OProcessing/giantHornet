@@ -1,7 +1,8 @@
 #include "function_flight_control.h"
 #include "define.h"
-#include "stm32f4xx_hal_tim.h"
-#include "stm32f446xx.h"
+#include "tim.h"
+
+extern TIM_HandleTypeDef htim2;
 
 void FCS_ESC_Starter()
 {

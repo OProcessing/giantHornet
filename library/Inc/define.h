@@ -1,6 +1,13 @@
+#ifndef INC_DEFINE_H_
+#define INC_DEFINE_H_
+
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <math.h>
 
 
 /* Private includes ----------------------------------------------------------*/
@@ -32,32 +39,16 @@
      (level) == LOG_WARN  ? "WARN"  : \
      (level) == LOG_ERROR ? "ERROR" : \
      (level) == LOG_FATAL ? "FATAL" : "UNKNOWN")
-/*
+
 #define log(level, fmt, ...)                                          \
     do {                                                              \
         if (level >= LOG_LEVEL) {                                     \
-            printf("[%s] [%s:%d] " fmt " (%s %s)\n",                \
+            printf("[%s] [%s:%d] " fmt " (%s %s)\n",                  \
                    LOG_LEVEL_STR(level), __func__, __LINE__,          \
                    ##__VA_ARGS__, __DATE__, __TIME__);                \
         }                                                             \
     } while(0)
-*/
-/*
-int calculate_sum(int *arr, int size) {
-    int sum = 0;
-    if (arr == NULL || size <= 0) {
-        log(LOG_ERROR, "Invalid parameters: arr=%p, size=%d", arr, size);
-        return -1;
-    }
-    log(LOG_DEBUG, "Starting sum calculation");
-    for (int i = 0; i < size; i++) {
-        sum += arr[i];
-        log(LOG_TRACE, "Added arr[%d]=%d, sum=%d", i, arr[i], sum);
-    }
-    log(LOG_INFO, "Sum calculation completed, sum=%d", sum);
-    return sum;
-}
-*/
+
 #define PI 3.141592653589793
 
 
@@ -67,6 +58,7 @@ int calculate_sum(int *arr, int size) {
 typedef enum
 {
     USER_RET_OK                		    = 0x00U,
+
     USER_RET_ERR_INVALID_PARAM       	= 0x01U << 0,
     USER_RET_ERR_NULL_POINTER        	= 0x01U << 1,
     USER_RET_ERR_COMMUNICATION_FAIL  	= 0x01U << 2,
@@ -86,3 +78,5 @@ typedef enum
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
 /* USER CODE END PFP */
+
+#endif /* INC_DEFINE_H_ */

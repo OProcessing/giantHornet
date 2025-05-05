@@ -7,4 +7,4 @@
 #define PWM_MIN 0
 #define PWM_OFFSET 0 
 
-extern TIM_HandleTypeDef htim2;
+#define PERIOD 20000 // 20ms period for 50Hz frequency
