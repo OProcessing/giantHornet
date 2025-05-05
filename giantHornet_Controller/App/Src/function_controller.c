@@ -27,26 +27,31 @@ USER_StatusTypeDef controller_init(void) {
 }
 
 void controller_task(void) {
+	USER_StatusTypeDef ret;
+
     if ((HAL_GetTick() - led_toggle_time) > 500) {
         led_toggle_time = HAL_GetTick();
 
         HAL_GPIO_TogglePin(D13_GPIO_Port, D13_Pin);
     }
 
-    if ((HAL_GetTick() - controller_time) > 100) {
+    if ((HAL_GetTick() - controller_time) > 1000) {
         controller_time = HAL_GetTick();
 
         controller_btn_read(&controller_btn);
 
-        packet_comm_t *lora_packet = lora_data;
+        packet_comm_t *lora_packet = (packet_comm_t*)lora_data;
         lora_packet->header = PACKET_HEADER;
         lora_packet->type = TYPE_NONE;
         lora_packet->action = ACTION_PACKRT;
         lora_packet->data_length = sizeof(struct ControllerBtn_t);
-        lora_packet->data_ptr = &controller_btn;
+        lora_packet->data_ptr = (uint8_t*)&controller_btn;
         lora_packet->tail = PACKET_TAIL;
 
-        size_t len = sizeof(packet_comm_t);
-        lora_send(lora_packet, &len); 
+        uint8_t len = sizeof(packet_comm_t);
+        ret = lora_send(lora_packet, &len); 
+        if(ret != USER_RET_OK) {
+            printf("lora send error! %d", ret);
+        }
     }
 }
