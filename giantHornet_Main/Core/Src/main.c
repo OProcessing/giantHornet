@@ -99,12 +99,12 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_USART1_UART_Init();
   MX_USART2_UART_Init();
-  MX_USART3_UART_Init();
   MX_ADC1_Init();
   MX_SPI2_Init();
   MX_TIM2_Init();
+  MX_USART1_UART_Init();
+  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
 
   printf("NiHao World\r\n");
@@ -116,9 +116,9 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  serial_status = HAL_UART_Receive(&huart1, buffer, 1, 100);
+	  int serial_status = HAL_UART_Receive(&huart1, rx_buffer, 1, 100);
 	  if (serial_status == HAL_OK) {
-		  HAL_UART_Transmit(&huart2, buffer, 1, 100);
+		  HAL_UART_Transmit(&huart2, rx_buffer, 1, 100);
 	  }
     /* USER CODE BEGIN 3 */
   }

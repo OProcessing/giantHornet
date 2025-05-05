@@ -59,6 +59,7 @@ float GPS_ConvertToDecimal(float nmea_coord, char direction)
     }
     return decimal;
 }
+
 void GPS_DebugPrint(void)
 {
     printf("\n[GPS DEBUG INFO]\n");
