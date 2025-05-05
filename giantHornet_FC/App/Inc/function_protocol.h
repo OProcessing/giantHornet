@@ -1,0 +1,6 @@
+#ifndef INC_FUNCTION_PROTOCOL_H_
+#define INC_FUNCTION_PROTOCOL_H_
+
+
+
+#endif /* INC_FUNCTION_PROTOCOL_H_ */
