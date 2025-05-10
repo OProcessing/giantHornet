@@ -112,7 +112,7 @@ int main(void)
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
   GPS_Init(&huart1);
-  lora_init(0); // 0 : slave mode
+  lora_init(&hspi2, 0); // 0 : slave mode
   /* USER CODE END 2 */
 
   /* Infinite loop */
