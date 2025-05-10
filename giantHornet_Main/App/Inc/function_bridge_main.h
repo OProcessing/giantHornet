@@ -1,3 +1,6 @@
+#ifndef INC_FUNCTION_BRIDGE_MAIN_H
+#define INC_FUNCTION_BRIDGE_MAIN_H
+
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
@@ -71,3 +74,6 @@ void MX_GPIO_Init(void)
 /* USER CODE BEGIN 2 */
 
 /* USER CODE END 2 */
+
+
+#endif /* INC_FUNCTION_BRIDGE_MAIN_H */

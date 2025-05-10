@@ -1,5 +1,5 @@
-#ifndef GPS_H
-#define GPS_H
+#ifndef INC_HARDWARE_GPS_H_
+#define INC_HARDWARE_GPS_H_
 
 #include "stm32f4xx_hal.h"
 
@@ -54,4 +54,5 @@ int GPS_GPGSV_Parse(char *nmea);
 int GPS_GPRMC_Parse(char *nmea);
 int GPS_GPGLL_Parse(char *nmea);
 int GPS_GPVTG_Parse(char *nmea);
-#endif
+
+#endif /* INC_HARDWARE_GPS_H_ */
