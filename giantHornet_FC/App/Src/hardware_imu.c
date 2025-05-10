@@ -32,6 +32,14 @@ uint8_t MPU_begin(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250)
 		// Set the full scale ranges
 		MPU_writeAccFullScaleRange(SPIx, pMPU9250, pMPU9250->settings.aFullScaleRange);
 		MPU_writeGyroFullScaleRange(SPIx, pMPU9250, pMPU9250->settings.gFullScaleRange);
+
+		addr = 0x1A;
+		val = 0x03;
+		MPU_REG_WRITE(SPIx, pMPU9250, &addr, &val);
+
+		// ACCEL_CONFIG2: A_DLPF_CFG = 3 → Accel BW = 44Hz
+		addr = 0x1D;
+		val = 0x03;
 		return 1;
 	}
 	else
@@ -203,7 +211,7 @@ void MPU_calibrateGyro(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250, uint16_t nu
 		x += pMPU9250->rawData.gx;
 		y += pMPU9250->rawData.gy;
 		z += pMPU9250->rawData.gz;
-		HAL_Delay(3);
+		HAL_Delay(10);
 	}
 
 	// Average the saved data points to find the gyroscope offset
@@ -245,8 +253,8 @@ void MPU_calcAttitude(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250)
 	MPU_readProcessedData(SPIx, pMPU9250);
 
 	// Complementary filter
-	float accelPitch = atan2(pMPU9250->sensorData.ay, pMPU9250->sensorData.az) * RAD2DEG;
-	float accelRoll = atan2(pMPU9250->sensorData.ax, pMPU9250->sensorData.az) * RAD2DEG;
+	float accelRoll  = atan2(pMPU9250->sensorData.ay, sqrt(pMPU9250->sensorData.az * pMPU9250->sensorData.az + pMPU9250->sensorData.ax * pMPU9250->sensorData.ax)) * RAD2DEG;
+	float accelPitch = atan2(-pMPU9250->sensorData.ax, sqrt(pMPU9250->sensorData.ay * pMPU9250->sensorData.ay + pMPU9250->sensorData.az * pMPU9250->sensorData.az)) * RAD2DEG;
 
 	pMPU9250->attitude.r = pMPU9250->attitude.tau * (pMPU9250->attitude.r - pMPU9250->sensorData.gy * pMPU9250->attitude.dt) + (1 - pMPU9250->attitude.tau) * accelRoll;
 	pMPU9250->attitude.p = pMPU9250->attitude.tau * (pMPU9250->attitude.p - pMPU9250->sensorData.gx * pMPU9250->attitude.dt) + (1 - pMPU9250->attitude.tau) * accelPitch;

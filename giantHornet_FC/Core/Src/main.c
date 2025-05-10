@@ -86,12 +86,12 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-  MPU9250.settings.gFullScaleRange = GFSR_500DPS;
-  MPU9250.settings.aFullScaleRange = AFSR_4G;
+  MPU9250.settings.gFullScaleRange = GFSR_250DPS;
+  MPU9250.settings.aFullScaleRange = AFSR_2G;
   MPU9250.settings.CS_PIN = GPIO_PIN_13;
   MPU9250.settings.CS_PORT = GPIOB;
-  MPU9250.attitude.tau = 0.99;
-  MPU9250.attitude.dt = 0.0005;
+  MPU9250.attitude.tau = 0.98f;
+  MPU9250.attitude.dt = 0.004f;
 
   /* USER CODE END 1 */
 
@@ -114,11 +114,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
-<<<<<<< Updated upstream
   //MX_SDIO_SD_Init();
-=======
-  MX_SDIO_SD_Init();
->>>>>>> Stashed changes
   MX_SPI2_Init();
   MX_USART3_UART_Init();
   MX_I2C1_Init();
@@ -129,19 +125,19 @@ int main(void)
   // IMU initial function
   // Check if IMU configured properly and block if it didn't
   if (MPU_begin(&hspi2, &MPU9250) != TRUE)
-  {]]
+  {
     sprintf((char *)serialBuf, "ERROR!\r\n");
     HAL_UART_Transmit(&huart2, serialBuf, strlen((char *)serialBuf), HAL_MAX_DELAY);
     while (1){}
   }
 
-  // Calibrate the IMU
-  sprintf((char *)serialBuf, "CALIBRATING...\r\n");
-  HAL_UART_Transmit(&huart2, serialBuf, strlen((char *)serialBuf), HAL_MAX_DELAY);
-  MPU_calibrateGyro(&hspi2, &MPU9250, 1500);
-  // IMU Process end
-  /*
-  bmp280_init_default_params(&bmp280.params);
+    // Calibrate the IMU
+    sprintf((char *)serialBuf, "CALIBRATING...\r\n");
+    HAL_UART_Transmit(&huart2, serialBuf, strlen((char *)serialBuf), HAL_MAX_DELAY);
+    MPU_calibrateGyro(&hspi2, &MPU9250, 1500);
+    // IMU Process end
+    /*
+    bmp280_init_default_params(&bmp280.params);
 	bmp280.addr = BMP280_I2C_ADDRESS_0;
 	bmp280.i2c = &hi2c3;
 
@@ -153,26 +149,26 @@ int main(void)
 	bool bme280p = bmp280.id == BME280_CHIP_ID;
 	size = sprintf((char *)Data, "BMP280: found %s\n", bme280p ? "BME280" : "BMP280");
 	HAL_UART_Transmit(&huart2, Data, size, 1000);
-   */
-  // Start timer and put processor into an efficient low power mode
-  //HAL_TIM_Base_Start_IT(&htim11);
-  //HAL_PWR_EnableSleepOnExit();
-  //HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
-  /* USER CODE END 2 */
+    */
+    // Start timer and put processor into an efficient low power mode
+    //HAL_TIM_Base_Start_IT(&htim11);
+    //HAL_PWR_EnableSleepOnExit();
+    //HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+    /* USER CODE END 2 */
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
-<<<<<<< Updated upstream
-	  MPU_calcAttitude(&hspi2, &MPU9250);
-	  HAL_Delay(40);
-=======
->>>>>>> Stashed changes
-
+    /* Infinite loop */
+    /* USER CODE BEGIN WHILE */
+    while (1)
+    {
+        /* USER CODE END WHILE */
+	    MPU_calcAttitude(&hspi2, &MPU9250);
+        printf("aX: %.2f aY: %.2f aZ: %.2f | gX: %.2f gY: %.2f gZ: %.2f | r: %.2f p: %.2f y: %.2f\n",
+        MPU9250.sensorData.ax, MPU9250.sensorData.ay, MPU9250.sensorData.az,
+        MPU9250.sensorData.gx, MPU9250.sensorData.gy, MPU9250.sensorData.gz,
+        MPU9250.attitude.r, MPU9250.attitude.p, MPU9250.attitude.y);
+        HAL_Delay(10);
     /* USER CODE BEGIN 3 */
-  }
+    }
   /* USER CODE END 3 */
 }
 
