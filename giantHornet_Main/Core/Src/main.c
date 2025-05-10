@@ -31,6 +31,7 @@
 #include "usart.h"
 
 #include "hardware_lora.h"
+#include "function_protocol.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,6 +57,8 @@ uint32_t gps_time;
 uint32_t lora_test_time;
 uint8_t lora_test_buf[64];
 uint8_t lora_test_len;
+
+uint32_t protocol_time;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -113,6 +116,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   GPS_Init(&huart1);
   lora_init(&hspi2, 0); // 0 : slave mode
+  protocol_init(&huart3);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -130,9 +134,14 @@ int main(void)
     if((HAL_GetTick() - lora_test_time) > 100) {
       lora_test_time = HAL_GetTick();
       USER_StatusTypeDef ret = lora_recv(lora_test_buf, &lora_test_len);
-      if(ret == USER_RET_OK) {
+      if(ret == USER_RET_OK && ret > 0) {
         printf("got lora data! len : %d\n", lora_test_len);
       }
+    }
+
+    if((HAL_GetTick() - protocol_time) > 100) {
+      protocol_time = HAL_GetTick();
+      protocol_parser();
     }
   }
   /* USER CODE END 3 */
