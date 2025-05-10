@@ -30,6 +30,7 @@
 #include "hardware_gps.h"
 #include "usart.h"
 
+#include "hardware_lora.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,7 +51,11 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+uint32_t gps_time;
 
+uint32_t lora_test_time;
+uint8_t lora_test_buf[64];
+uint8_t lora_test_len;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -105,20 +110,30 @@ int main(void)
   MX_TIM2_Init();
   MX_USART1_UART_Init();
   MX_USART3_UART_Init();
-  HAL_Delay(50);
   /* USER CODE BEGIN 2 */
   GPS_Init(&huart1);
+  lora_init(0); // 0 : slave mode
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    GPS_UART_Callback();
-    HAL_Delay(100);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    if((HAL_GetTick() - gps_time) > 100) {
+      gps_time = HAL_GetTick();
+      GPS_UART_Callback();
+    }
+
+    if((HAL_GetTick() - lora_test_time) > 100) {
+      lora_test_time = HAL_GetTick();
+      USER_StatusTypeDef ret = lora_recv(lora_test_buf, &lora_test_len);
+      if(ret == USER_RET_OK) {
+        printf("got lora data! len : %d\n", lora_test_len);
+      }
+    }
   }
   /* USER CODE END 3 */
 }
