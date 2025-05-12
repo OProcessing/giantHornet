@@ -7,7 +7,7 @@
 #define PACKET_HEADER  0xA840  // '¿' '@'
 #define PACKET_TAIL    0x3F    // '?'
 
-extern uint8_t data_ptr[];
+extern uint8_t* data_ptr;
 
 #pragma pack(push, 1)
 typedef struct {
@@ -31,6 +31,18 @@ typedef struct {
     uint8_t     tail;
 } packet_comm_t;
 #pragma pack(pop)
+
+// packet sequence
+typedef enum {
+    SEQ_HEADER_1,
+    SEQ_HEADER_2,
+    SEQ_TYPE,
+    SEQ_ACTION,
+    SEQ_LEN,
+    SEQ_DATA,
+    SEQ_CHECKSUM,
+    SEQ_TAIL,
+} packet_sequence_t; 
 
 // 센서 type, 
 enum packet_type {
