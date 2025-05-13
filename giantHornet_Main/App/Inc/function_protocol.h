@@ -5,6 +5,8 @@
 #include "protocol.h"
 #include "define.h"
 
+#define PACKET_TIMEOUT 1000
+
 void protocol_init(UART_HandleTypeDef *uart);
 volatile void protocol_rx(void);
 void protocol_tx(uint8_t *data, size_t len);

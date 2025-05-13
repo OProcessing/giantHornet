@@ -13,6 +13,8 @@ static uint8_t packet_checksum;
 static uint8_t packet_data[MAX_PAYLOAD_LENGTH];
 static uint8_t packet_data_count;
 
+static uint32_t packet_timer;
+
 void protocol_init(UART_HandleTypeDef *uart) {
   data_ptr = packet_data;
   packet_seq = SEQ_HEADER_1;
@@ -40,8 +42,13 @@ void protocol_tx(uint8_t *data, size_t len) {
 }
 
 void protocol_parser(void) {
-  // until read all data
   uint8_t buf_temp;
+
+  if((HAL_GetTick() - packet_timer) > PACKET_TIMEOUT) { // timeout check
+    packet_seq = SEQ_HEADER_1;
+  }
+
+  // until read all data
   while(RingBuffer_Get(&rx_rb, &buf_temp)) {
     //protocol_tx(&buf_temp, 1); // loopback test
     switch (packet_seq)
@@ -49,6 +56,7 @@ void protocol_parser(void) {
     case SEQ_HEADER_1:
       if(buf_temp == ((PACKET_HEADER >> 8) & 0xFF)) {
         packet_comm_data.header = (uint16_t)buf_temp << 8;
+        packet_timer = HAL_GetTick();
         packet_seq = SEQ_HEADER_2;
       }
       break;
@@ -63,24 +71,29 @@ void protocol_parser(void) {
       break;
     case SEQ_TYPE:
       packet_comm_data.type = buf_temp;
-      calculate_checksum(buf_temp, packet_checksum);
+      calculate_checksum(&buf_temp, &packet_checksum);
       packet_seq = SEQ_ACTION;
       break;
     case SEQ_ACTION:
       packet_comm_data.action = buf_temp;
-      calculate_checksum(buf_temp, packet_checksum);
+      calculate_checksum(&buf_temp, &packet_checksum);
       packet_seq = SEQ_LEN;
       break;
     case SEQ_LEN:
       packet_comm_data.data_length = buf_temp;
       packet_data_count = 0;
-      calculate_checksum(buf_temp, packet_checksum);
-      packet_seq = SEQ_DATA;
+      calculate_checksum(&buf_temp, &packet_checksum);
+      if(packet_comm_data.data_length == 0) {
+        packet_seq = SEQ_CHECKSUM;
+      } else {
+        packet_seq = SEQ_DATA;
+      }
+
       break;
     case SEQ_DATA:
       packet_data[packet_data_count] = buf_temp;
       packet_data_count++;
-      calculate_checksum(buf_temp, packet_checksum);
+      calculate_checksum(&buf_temp, &packet_checksum);
       if(packet_data_count >= packet_comm_data.data_length) {
         packet_seq = SEQ_CHECKSUM;
       }
