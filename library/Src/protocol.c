@@ -3,14 +3,11 @@
 #include <string.h>
 #include "protocol.h"
 
-uint8_t data_ptr[MAX_PAYLOAD_LENGTH];
+uint8_t* data_ptr;
 
-uint8_t calculate_checksum(uint8_t *data, uint8_t length) {
-    uint8_t checksum = 0;
-    for (uint8_t i = 0; i < length; i++) {
-        checksum ^= data[i];
-    }
-    return checksum;
+uint8_t calculate_checksum(uint8_t *data, uint8_t *checksum) {
+    *checksum ^= *data;
+    return *checksum;
 }
 
 void create_packet_log(packet_log_t *packet, uint8_t type, uint8_t action, uint8_t *data, uint8_t length) {

@@ -27,7 +27,11 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "define.h"
+#include "hardware_gps.h"
+#include "usart.h"
 
+#include "hardware_lora.h"
+#include "function_protocol.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -37,7 +41,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define RX_BUFFER_SIZE  256
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -48,7 +52,13 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+uint32_t gps_time;
 
+uint32_t lora_test_time;
+uint8_t lora_test_buf[64];
+uint8_t lora_test_len;
+
+uint32_t protocol_time;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -59,6 +69,12 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+//* @brief  Retargets the C library printf function to the USART.
+int _write(int fd, char *ptr, int len)
+{
+  HAL_UART_Transmit(&huart2, (const uint8_t *)ptr, len, 100);
+  return len;
+}
 
 /* USER CODE END 0 */
 
@@ -98,18 +114,35 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  GPS_Init(&huart1);
+  lora_init(&hspi2, 0); // 0 : slave mode
+  protocol_init(&huart3);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  static uint16_t hello_world = 0;
-	  hello_world++;
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    if((HAL_GetTick() - gps_time) > 100) {
+      gps_time = HAL_GetTick();
+      GPS_UART_Callback();
+    }
+
+    if((HAL_GetTick() - lora_test_time) > 100) {
+      lora_test_time = HAL_GetTick();
+      USER_StatusTypeDef ret = lora_recv(lora_test_buf, &lora_test_len);
+      if(ret == USER_RET_OK && ret > 0) {
+        printf("got lora data! len : %d\n", lora_test_len);
+      }
+    }
+
+    if((HAL_GetTick() - protocol_time) > 100) {
+      protocol_time = HAL_GetTick();
+      protocol_parser();
+    }
   }
   /* USER CODE END 3 */
 }
