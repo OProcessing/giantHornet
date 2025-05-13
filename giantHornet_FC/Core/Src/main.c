@@ -36,6 +36,8 @@
 #include "hardware_imu.h"
 #include "hardware_altitude.h"
 
+#include "usart.h"
+#include "function_protocol.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -65,6 +67,7 @@ float pressure, temperature, humidity;
 uint16_t size;
 uint8_t Data[256];
 
+uint32_t protocol_time;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -121,6 +124,7 @@ int main(void)
   MX_I2C3_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+  protocol_init(&huart3);
 
   // IMU initial function
   // Check if IMU configured properly and block if it didn't
@@ -160,14 +164,20 @@ int main(void)
     /* USER CODE BEGIN WHILE */
     while (1)
     {
-        /* USER CODE END WHILE */
-	    MPU_calcAttitude(&hspi2, &MPU9250);
-        printf("aX: %.2f aY: %.2f aZ: %.2f | gX: %.2f gY: %.2f gZ: %.2f | r: %.2f p: %.2f y: %.2f\n",
-        MPU9250.sensorData.ax, MPU9250.sensorData.ay, MPU9250.sensorData.az,
-        MPU9250.sensorData.gx, MPU9250.sensorData.gy, MPU9250.sensorData.gz,
-        MPU9250.attitude.r, MPU9250.attitude.p, MPU9250.attitude.y);
-        HAL_Delay(10);
+    /* USER CODE END WHILE */
+
     /* USER CODE BEGIN 3 */
+      MPU_calcAttitude(&hspi2, &MPU9250);
+      printf("aX: %.2f aY: %.2f aZ: %.2f | gX: %.2f gY: %.2f gZ: %.2f | r: %.2f p: %.2f y: %.2f\n",
+      MPU9250.sensorData.ax, MPU9250.sensorData.ay, MPU9250.sensorData.az,
+      MPU9250.sensorData.gx, MPU9250.sensorData.gy, MPU9250.sensorData.gz,
+      MPU9250.attitude.r, MPU9250.attitude.p, MPU9250.attitude.y);
+      HAL_Delay(10);
+
+      if((HAL_GetTick() - protocol_time) > 100) {
+        protocol_time = HAL_GetTick();
+        protocol_parser();
+      }
     }
   /* USER CODE END 3 */
 }
