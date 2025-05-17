@@ -51,7 +51,7 @@ void controller_task(void) {
         uint8_t len = sizeof(packet_comm_t);
         ret = lora_send(lora_packet, &len); 
         if(ret != USER_RET_OK) {
-            printf("lora send error! %d", ret);
+            printf("lora send error! %d\n", ret);
         }
     }
 }
