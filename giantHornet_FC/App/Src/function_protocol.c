@@ -50,7 +50,7 @@ void protocol_parser(void) {
 
   // until read all data
   while(RingBuffer_Get(&rx_rb, &buf_temp)) {
-    protocol_tx(&buf_temp, 1); // loopback test
+    // protocol_tx(&buf_temp, 1); // loopback test
     switch (packet_seq)
     {
     case SEQ_HEADER_1:
@@ -128,6 +128,7 @@ void protocol_handler(packet_comm_t *packet_comm_data) {
 
   switch (packet_comm_data->type) {
   case TYPE_NONE:
+  	printf("got packet!, %02X\n", packet_comm_data->data_ptr[0]);
     break;
   case TYPE_GPS_COORDINATES:
     break;

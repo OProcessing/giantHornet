@@ -78,7 +78,11 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+int _write(int fd, char *ptr, int len)
+{
+  HAL_UART_Transmit(&huart2, (const uint8_t *)ptr, len, 100);
+  return len;
+}
 /* USER CODE END 0 */
 
 /**
@@ -162,6 +166,8 @@ int main(void)
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
+    printf("FC - loop start\n");
+
     while (1)
     {
     /* USER CODE END WHILE */
