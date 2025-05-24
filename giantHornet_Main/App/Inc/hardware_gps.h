@@ -32,11 +32,11 @@ typedef struct {
 
 typedef enum {
     NMEA_UNKNOWN = 0,
-    NMEA_GPGGA,
-    NMEA_GPGSV,
-    NMEA_GPRMC,
-    NMEA_GPGLL,
-    NMEA_GPVTG,
+    NMEA_GGA,
+    NMEA_GSV,
+    NMEA_RMC,
+    NMEA_GLL,
+    NMEA_VTG,
 } NMEA_Type;
 
 void GPS_Init(UART_HandleTypeDef *huart);
@@ -49,10 +49,10 @@ float GPS_ConvertToDecimalDegrees(float degrees, char direction);
 void GPS_DebugPrint(void);
 int GPS_Validate_Checksum(char *nmea);
 int GPS_ParseNMEA(char *nmea);
-int GPS_GPGGA_Parse(char *nmea);
-int GPS_GPGSV_Parse(char *nmea);
-int GPS_GPRMC_Parse(char *nmea);
-int GPS_GPGLL_Parse(char *nmea);
-int GPS_GPVTG_Parse(char *nmea);
+int GPS_GGA_Parse(char *nmea);
+int GPS_GSV_Parse(char *nmea);
+int GPS_RMC_Parse(char *nmea);
+int GPS_GLL_Parse(char *nmea);
+int GPS_VTG_Parse(char *nmea);
 
 #endif /* INC_HARDWARE_GPS_H_ */

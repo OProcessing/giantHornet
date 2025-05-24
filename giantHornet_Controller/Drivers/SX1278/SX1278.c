@@ -226,7 +226,7 @@ int SX1278_LoRaTxPacket(SX1278_t *module, uint8_t *txBuffer, uint8_t length,
 			SX1278_SPIRead(module, LR_RegIrqFlags);
 			SX1278_clearLoRaIrq(module); //Clear irq
 			SX1278_standby(module); //Entry Standby mode
-			return 0;
+			return length;
 		}
 
 		if (--timeout == 0) {
