@@ -3,6 +3,7 @@
 #include "stm32f4xx_hal.h"
 #include "main.h"
 #include "function_controller.h"
+#include "protocol.h"
 
 static uint32_t led_toggle_time = 0;
 static uint32_t controller_time = 0;
@@ -35,23 +36,36 @@ void controller_task(void) {
         HAL_GPIO_TogglePin(D13_GPIO_Port, D13_Pin);
     }
 
-    if ((HAL_GetTick() - controller_time) > 1000) {
+    if ((HAL_GetTick() - controller_time) > 50) {
         controller_time = HAL_GetTick();
 
         controller_btn_read(&controller_btn);
 
-        packet_comm_t *lora_packet = (packet_comm_t*)lora_data;
-        lora_packet->header = PACKET_HEADER;
-        lora_packet->type = TYPE_NONE;
-        lora_packet->action = ACTION_PACKRT;
-        lora_packet->data_length = sizeof(struct ControllerBtn_t);
-        lora_packet->data_ptr = (uint8_t*)&controller_btn;
-        lora_packet->tail = PACKET_TAIL;
+        uint8_t remote_data[6] = {
+            (~controller_btn.buttons & 0xFF),
+            0x00,
+            (int8_t)((controller_btn.joy00_x - 0.5) * 127),
+            (int8_t)((controller_btn.joy00_y - 0.5) * 127),
+            0x00,
+            0x00
+        };
 
-        uint8_t len = sizeof(packet_comm_t);
-        ret = lora_send(lora_packet, &len); 
+        packet_comm_t packet_comm;
+        create_packet_comm(&packet_comm, TYPE_REMOTE, ACTION_PACKET, remote_data, 6);
+        uint8_t len = make_packet_comm(lora_data, &packet_comm);
+
+        /*
+        printf("data[%d] : {", len);
+        for(int i=0; i<len; i++) {
+            printf("%02X, ", ((uint8_t *)lora_data)[i]);
+        }
+        printf("}\n");
+        */
+
+        ret = lora_send(lora_data, &len);
         if(ret != USER_RET_OK) {
             printf("lora send error! %d\n", ret);
         }
+        //HAL_GPIO_TogglePin(D13_GPIO_Port, D13_Pin);
     }
 }

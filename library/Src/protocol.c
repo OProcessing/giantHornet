@@ -10,22 +10,110 @@ uint8_t calculate_checksum(uint8_t *data, uint8_t *checksum) {
     return *checksum;
 }
 
-void create_packet_log(packet_log_t *packet, uint8_t type, uint8_t action, uint8_t *data, uint8_t length) {
+void create_packet_log(packet_log_t *packet, uint32_t timestamp, uint16_t timestamp_ms, uint8_t type, uint8_t action, uint8_t *data, uint8_t length) {
     packet->header = PACKET_HEADER;
+    packet->timestamp = timestamp;
+    packet->timestamp_ms = timestamp_ms;
     packet->type = type;
     packet->action = action;
     packet->data_length = length;
-    memcpy(packet->data_ptr, data, length);
+    packet->data_ptr = data;
     packet->tail = PACKET_TAIL;
 }
 
-void create_packet_Tx(packet_log_t *packet, uint8_t type, uint8_t action, uint8_t *data, uint8_t length) {
+uint8_t make_packet_log(uint8_t *data, packet_log_t *packet) {
+    uint8_t count = 0;
+
+    if(packet->data_length > MAX_PAYLOAD_LENGTH) {
+        return 0;
+    }
+
+    data[count] = (packet->header >> 8);
+    count++;
+    data[count] = (packet->header & 0xFF);
+    count++;
+
+    data[count] = (packet->timestamp >> 24) & 0xFF;
+    count++;
+    data[count] = (packet->timestamp >> 16) & 0xFF;
+    count++;
+    data[count] = (packet->timestamp >> 8) & 0xFF;
+    count++;
+    data[count] = (packet->timestamp & 0xFF);
+    count++;
+
+    data[count] = (packet->timestamp_ms >> 8);
+    count++;
+    data[count] = (packet->timestamp_ms & 0xFF);
+    count++;
+
+    data[count] = packet->type;
+    count++;
+
+    data[count] = packet->action;
+    count++;
+
+    data[count] = packet->data_length;
+    count++;
+
+    for(int i=0; i<packet->data_length; i++) {
+        data[count] = packet->data_ptr[i];
+        count++;
+    }
+
+    data[count] = PACKET_TAIL;
+    count++;
+
+    return count;
+}
+
+void create_packet_comm(packet_comm_t *packet, uint8_t type, uint8_t action, uint8_t *data, uint8_t length) {
     packet->header = PACKET_HEADER;
     packet->type = type;
     packet->action = action;
     packet->data_length = length;
-    memcpy(packet->data_ptr, data, length);
+    packet->data_ptr = data;
     packet->tail = PACKET_TAIL;
+}
+
+uint8_t make_packet_comm(uint8_t *data, packet_comm_t *packet) {
+    uint8_t count = 0;
+    uint8_t checksum = 0x00;
+
+    if(packet->data_length > MAX_PAYLOAD_LENGTH) {
+        return 0;
+    }
+
+    data[count] = (packet->header >> 8);
+    count++;
+    data[count] = (packet->header & 0xFF);
+    count++;
+
+    data[count] = packet->type;
+    calculate_checksum(&data[count], &checksum);
+    count++;
+
+    data[count] = packet->action;
+    calculate_checksum(&data[count], &checksum);
+    count++;
+
+    data[count] = packet->data_length;
+    calculate_checksum(&data[count], &checksum);
+    count++;
+
+    for(int i=0; i<packet->data_length; i++) {
+        data[count] = packet->data_ptr[i];
+        calculate_checksum(&data[count], &checksum);
+        count++;
+    }
+
+    data[count] = checksum;
+    count++;
+
+    data[count] = PACKET_TAIL;
+    count++;
+
+    return count;
 }
 
 int parse_packet(const uint8_t *buffer, size_t buffer_len, packet_log_t *out_packet, uint8_t *payload_buf) {

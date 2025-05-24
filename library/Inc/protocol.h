@@ -19,28 +19,31 @@ typedef enum {
     SEQ_DATA,
     SEQ_CHECKSUM,
     SEQ_TAIL,
-} packet_sequence_t;
+} packet_sequence_t; 
 
-// 센서 type, 
+// packet data type
 typedef enum {
     TYPE_NONE,
     TYPE_GPS_COORDINATES,
     TYPE_PID_RESULTS,
     TYPE_IMU_ALT_GPS,
     TYPE_PID_CALC_DATA,
+    TYPE_MOTOR_CONTROL,
+    TYPE_REMOTE,
     // ...
 } packet_type_t;
 
-// action
+// packet action type
 typedef enum {
     ACTION_NONE,
-    ACTION_PACKRT,
+    ACTION_PACKET,
     ACTION_EVENT,
     ACTION_REQUEST,
     ACTION_DEBUG,
     // ...
 } packet_action_t;
 
+// packet
 #pragma pack(push, 1)
 typedef struct {
     uint16_t            header;
@@ -65,7 +68,9 @@ typedef struct {
 #pragma pack(pop)
 
 extern uint8_t calculate_checksum(uint8_t *data, uint8_t *checksum);
-extern void create_packet_log(packet_log_t *packet, uint8_t type, uint8_t action, uint8_t *data, uint8_t length);
-extern void create_packet_Tx(packet_log_t *packet, uint8_t type, uint8_t action, uint8_t *data, uint8_t length);
+extern void create_packet_log(packet_log_t *packet, uint32_t timestamp, uint16_t timestamp_ms, uint8_t type, uint8_t action, uint8_t *data, uint8_t length);
+extern uint8_t make_packet_log(uint8_t *data, packet_log_t *packet);
+extern void create_packet_comm(packet_comm_t *packet, uint8_t type, uint8_t action, uint8_t *data, uint8_t length);
+extern uint8_t make_packet_comm(uint8_t *data, packet_comm_t *packet);
 
 #endif /* INC_PROTOCOL_H_ */
