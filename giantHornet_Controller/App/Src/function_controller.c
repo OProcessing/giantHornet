@@ -10,7 +10,7 @@ static struct ControllerBtn_t controller_btn;
 
 static uint8_t lora_data[256];
 
-USER_StatusTypeDef controller_init(void) {
+USER_StatusTypeDef controller_init(SPI_HandleTypeDef* spi) {
     USER_StatusTypeDef ret;
     
     ret = controller_btn_init(&controller_btn);
@@ -19,7 +19,7 @@ USER_StatusTypeDef controller_init(void) {
         return ret;
     }
 
-    ret = lora_init(1);
+    ret = lora_init(spi, 1);
     if(ret != USER_RET_OK) {
         printf("lora init error! %d", ret);
     }
