@@ -5,7 +5,7 @@
 SX1278_hw_t SX1278_hw;
 SX1278_t SX1278;
 
-USER_StatusTypeDef lora_init(uint8_t master_enable) {
+USER_StatusTypeDef lora_init(SPI_HandleTypeDef* spi, uint8_t master_enable) {
 
     int ret;
 
@@ -15,7 +15,7 @@ USER_StatusTypeDef lora_init(uint8_t master_enable) {
     SX1278_hw.dio0.port = LORA_DIO0_GPIO_Port;
     SX1278_hw.nss.pin = LORA_NSS_Pin;
     SX1278_hw.nss.port = LORA_NSS_GPIO_Port;
-    SX1278_hw.spi = &hspi2;
+    SX1278_hw.spi = spi;
 
     SX1278.hw = &SX1278_hw;
 
@@ -36,6 +36,7 @@ USER_StatusTypeDef lora_init(uint8_t master_enable) {
 
 USER_StatusTypeDef lora_send(void* data, uint8_t* len) {
     int ret;
+    ret = SX1278_LoRaEntryTx(&SX1278, *len, LORA_TIMEOUT);
     ret = SX1278_LoRaTxPacket(&SX1278, (uint8_t*)data, (uint8_t)*len, LORA_TIMEOUT);
 
     if(ret < 0) {
@@ -53,7 +54,7 @@ USER_StatusTypeDef lora_recv(void* data, uint8_t* len) {
         *len = ret;
         return USER_RET_ERR_COMMUNICATION_FAIL;
     } else {
-        SX1278_read(&SX1278, (uint8_t*)data, ret);
+        ret = SX1278_read(&SX1278, (uint8_t*)data, ret);
         *len = ret;
         return USER_RET_OK;
     }
