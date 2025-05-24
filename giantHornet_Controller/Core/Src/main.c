@@ -19,12 +19,14 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "adc.h"
+#include "dma.h"
 #include "spi.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdio.h>
 #include "hardware_controller.h"
 #include "hardware_lora.h"
 #include "function_controller.h"
@@ -60,7 +62,11 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+int _write(int fd, char *ptr, int len)
+{
+  HAL_UART_Transmit(&huart2, (const uint8_t *)ptr, len, 100);
+  return len;
+}
 /* USER CODE END 0 */
 
 /**
@@ -80,8 +86,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  controller_init();
-  lora_init();
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -93,21 +98,31 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_ADC1_Init();
   MX_SPI2_Init();
   MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  USER_StatusTypeDef ret = controller_init(&hspi2);
+  if(ret == USER_RET_OK) {
+    printf("init seq ok!\n");
+  } else {
+    printf("init seq error! %d\n", ret);
+    Error_Handler();
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  printf("Controller - loop start\n");
+
   while (1)
   {
     /* USER CODE END WHILE */
-	controller_task();
+
     /* USER CODE BEGIN 3 */
+    controller_task();
   }
   /* USER CODE END 3 */
 }
