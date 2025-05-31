@@ -21,57 +21,93 @@
 #define TRUE  1
 #define FALSE 0
 
-#define LOG_TRACE   0
-#define LOG_DEBUG   1
-#define LOG_INFO    2
-#define LOG_WARN    3  
-#define LOG_ERROR   4
-#define LOG_FATAL   5
+/**
+ * 로그 레벨
+ * LOG DEBUG    : 디버그 정보 
+ * LOG INFO     : 정보 메시지
+ * LOG TARCE    : 실행 이력
+ * LOG WARN     : 경고 메시지 
+ * LOG ERROR    : 오류 메시지
+ * LOG FATAL    : 심각한 오류 메시지
+ */
+typedef enum
+{
+    LOG_DEBUG,
+    LOG_INFO,
+    LOG_TRACE,
+    LOG_WARN,   //default
+    LOG_ERROR,
+    LOG_FATAL,
+}LOG_LEVEL_e;
 #define LOG_LEVEL   LOG_TRACE
 
-
-#define LOG_LEVEL   LOG_TRACE
-
-#define LOG_LEVEL_STR(level)  \
-    ((level) == LOG_TRACE ? "TRACE" : \
-     (level) == LOG_DEBUG ? "DEBUG" : \
-     (level) == LOG_INFO  ? "INFO"  : \
-     (level) == LOG_WARN  ? "WARN"  : \
-     (level) == LOG_ERROR ? "ERROR" : \
-     (level) == LOG_FATAL ? "FATAL" : "UNKNOWN")
-
-#define log(level, fmt, ...)                                          \
-    do {                                                              \
-        if (level >= LOG_LEVEL) {                                     \
-            printf("[%s] [%s:%d] " fmt " (%s %s)\n",                  \
-                   LOG_LEVEL_STR(level), __func__, __LINE__,          \
-                   ##__VA_ARGS__, __DATE__, __TIME__);                \
-        }                                                             \
-    } while(0)
+void Log_message(LOG_LEVEL_e level, const char *file, const char *func, int line, const char *fmt, ...);
+/**
+ * DEBUG    : [level] [file:line->func] [debug message]   [fmt] [time]
+ * INFO     : [level]            [func] [info  message]   [fmt]
+ * TRACE    : [level]            [func]
+ * WARN     : [level]            [func] [warn  message]   [fmt]
+ * ERROR    : [level] [file:line->func] [error message]   [fmt] [time]
+ * FATAL    : [level] [file:line->func] [fatal message]   [fmt] [time]
+ */
+#define LOG_DEBUG(fmt, ...) Log_message(LOG_DEBUG, __FILE__, __func__, __LINE__, fmt, ##__VA_ARGS__)
+#define LOG_INFO(fmt, ...)  Log_message(LOG_INFO,      NULL, __func__,       -1, fmt, ##__VA_ARGS__)
+#define LOG_TRACE(fmt, ...) Log_message(LOG_TRACE,     NULL, __func__,       -1, fmt, ##__VA_ARGS__)
+#define LOG_WARN(fmt, ...)  Log_message(LOG_WARN,      NULL, __func__,       -1, fmt, ##__VA_ARGS__)
+#define LOG_ERROR(fmt, ...) Log_message(LOG_ERROR,     NULL, __func__,       -1, fmt, ##__VA_ARGS__)
+#define LOG_FATAL(fmt, ...) Log_message(LOG_FATAL, __FILE__, __func__, __LINE__, fmt, ##__VA_ARGS__)
 
 #define PI 3.141592653589793
-
-
 
 // 정의된 이름은 추후 변경. 현재는 임시로 정의함.
 // 사용자 정의 에러 (STM 권장 형식)
 typedef enum
 {
-    USER_RET_OK                		    = 0x00U,
+    // General 0x00~0x0F
+    USER_RET_OK                      = 0x00U,
+    USER_RET_ERR_FAILED              = 0x01U,
+    USER_RET_ERR_UNKNOWN             = 0x0FU,
 
-    USER_RET_ERR_INVALID_PARAM       	= 0x01U << 0,
-    USER_RET_ERR_NULL_POINTER        	= 0x01U << 1,
-    USER_RET_ERR_COMMUNICATION_FAIL  	= 0x01U << 2,
-    USER_RET_ERR_TIMEOUT             	= 0x01U << 3,
-    USER_RET_ERR_HW_FAILURE          	= 0x01U << 4,
-    USER_RET_ERR_MEMORY_FAILURE      	= 0x01U << 5,
-    USER_RET_ERR_UNSUPPORTED         	= 0x01U << 6,
-    USER_RET_ERR_NO_RESOURCE         	= 0x01U << 7,
-    USER_RET_ERR_UNKNOWN             	= 0x01U << 8,
-    
-    USER_RET_HARDWARE_IMU             = 0x01U << 9,
-    USER_RET_HARDWARE_GPS             = 0x02U << 10,
-    USER_RET_HARDWARE_TOF             = 0x04U << 11,
+    // Parameter 0x10~0x1F
+    USER_RET_ERR_INVALID_PARAM       = 0x10U,
+    USER_RET_ERR_NULL_POINTER        = 0x11U,
+    USER_RET_ERR_INVALID_STATE       = 0x12U,
+    USER_RET_ERR_OUT_OF_RANGE        = 0x13U,
+
+    // Memory 0x20~0x2F
+    USER_RET_ERR_NO_RESOURCE         = 0x20U,
+    USER_RET_ERR_MEMORY_ALLOC        = 0x21U,
+    USER_RET_ERR_MEMORY_FREE         = 0x22U,
+    USER_RET_ERR_RESOURCE_BUSY       = 0x23U,
+
+    // Communication 0x30~0x3F
+    USER_RET_ERR_DISCONNECTED        = 0x30U,
+    USER_RET_ERR_INVALID             = 0x31U,
+    USER_RET_ERR_CHECKSUM            = 0x32U,
+    USER_RET_ERR_COMM_FAILED         = 0x33U,
+
+    // Hardware 0x40~0x4F
+    USER_RET_ERR_HW_FAILURE          = 0x40U,
+    USER_RET_ERR_UNSUPPORTED_HW      = 0x41U,
+    USER_RET_ERR_HW_NOT_FOUND        = 0x42U,
+    USER_RET_ERR_HW_BUSY             = 0x43U,
+
+    // Sensor 0x50~0x5F
+    USER_RET_ERR_IMU_FAILURE         = 0x50U,
+    USER_RET_ERR_GPS_FAILURE         = 0x51U,
+    USER_RET_ERR_TOF_FAILURE         = 0x52U,
+    USER_RET_ERR_SD_FAILURE          = 0x53U,
+    USER_RET_ERR_MOTOR_FAILURE       = 0x54U,
+
+    // Storage 0x60~0x6F
+    USER_RET_ERR_FILE_NOT_FOUND      = 0x60U,
+    USER_RET_ERR_FILE_READ           = 0x61U,
+    USER_RET_ERR_FILE_WRITE          = 0x62U,
+    USER_RET_ERR_STORAGE_FULL        = 0x63U,
+
+    // 0xF0~0xFF
+    USER_RET_ERR_UNSUPPORTED         = 0xF0U,
+    USER_RET_ERR_USER_DEFINED        = 0xF1U,
 } USER_StatusTypeDef;
 /* USER CODE END PTD */
 
