@@ -118,16 +118,16 @@ uint8_t make_packet_comm(uint8_t *buffer, const packet_comm_t *packet) {
 }
 
 USER_StatusTypeDef parse_packet_comm(const uint8_t *buffer, const size_t buffer_len, packet_comm_t *out_packet, uint8_t *payload_buf) {
-    if (!buffer || !out_packet || !payload_buf) return ERR_NULL_POINTER;
+    if (!buffer || !out_packet || !payload_buf) return USER_RET_ERR_NULL_POINTER;
 
     size_t min_packet_size = 2 + 1 + 1 + 1 + 0 + 1 + 1;
-    if (buffer_len < min_packet_size) return ERR_NO_RESOURCE;
+    if (buffer_len < min_packet_size) return USER_RET_ERR_NO_RESOURCE;
 
     size_t offset = 0;
     uint8_t checksum = 0x00;
 
     uint16_t header = (buffer[offset] << 8) | buffer[offset+1];
-    if (header != PACKET_HEADER) return ERR_INVALID_PARAM;
+    if (header != PACKET_HEADER) return USER_RET_ERR_INVALID;
     out_packet->header = header;
     offset += 2;
 
@@ -143,8 +143,8 @@ USER_StatusTypeDef parse_packet_comm(const uint8_t *buffer, const size_t buffer_
     calculate_checksum(&buffer[offset], &checksum);
     offset++;
 
-    if (out_packet->data_length > MAX_PAYLOAD_LENGTH) return ERR_INVALID_PARAM;
-    if (buffer_len < offset + out_packet->data_length + 2) return ERR_NO_RESOURCE;
+    if (out_packet->data_length > MAX_PAYLOAD_LENGTH) return USER_RET_ERR_INVALID;
+    if (buffer_len < offset + out_packet->data_length + 2) return USER_RET_ERR_NO_RESOURCE;
 
     for(int i=0; i < out_packet->data_length; i++) {
         payload_buf[i] = buffer[offset + i];
@@ -155,7 +155,7 @@ USER_StatusTypeDef parse_packet_comm(const uint8_t *buffer, const size_t buffer_
     //if (buffer[offset] != checksum) return ERR_INVALID_PARAM;
     offset++;
 
-    if (buffer[offset] != PACKET_TAIL) return ERR_INVALID_PARAM;
+    if (buffer[offset] != PACKET_TAIL) return USER_RET_ERR_INVALID;
     out_packet->tail = buffer[offset];
 
     return USER_RET_OK;
