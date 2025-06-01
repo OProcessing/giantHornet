@@ -79,3 +79,18 @@ openocd -f interface/stlink.cfg -f target/stm32f4x.cfg -c "program build/your_bi
 
 로그 출력을 활성화하여 문제 발생 지점을 파악하세요.
 문제 재현 방법을 문서화하여 팀원과 공유하세요.-->
+
+## License
+
+This project is licensed under the MIT License.  
+See [LICENSE](./LICENSE) for details.
+
+---
+
+### Third-party components
+
+This project is licensed primarily under the **MIT License**.  
+It also includes third-party components with the following licenses:
+
+- **SX1278** (by Wojciech Domski), licensed under the **MIT License**.  
+  See `third_party_licenses/SX1278-MIT.txt`.

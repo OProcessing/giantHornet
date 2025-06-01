@@ -1,7 +1,0 @@
-{
-    "files.associations": {
-        "define.h": "c",
-        "ring_buffer.h": "c",
-        "hardware_gps.h": "c"
-    }
-}
