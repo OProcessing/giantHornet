@@ -28,10 +28,9 @@
 /* USER CODE BEGIN Includes */
 #include "define.h"
 #include "hardware_gps.h"
+#include "function_bridge_main.h"
 #include "usart.h"
 
-#include "hardware_lora.h"
-#include "function_protocol.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -52,13 +51,9 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+uint32_t led_time;
 uint32_t gps_time;
 
-uint32_t lora_test_time;
-uint8_t lora_test_buf[256];
-uint8_t lora_test_len;
-
-uint32_t protocol_time;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -85,7 +80,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  USER_StatusTypeDef ret;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -114,14 +109,14 @@ int main(void)
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
   GPS_Init(&huart1);
-  USER_StatusTypeDef ret = lora_init(&hspi2, 0); // 0 : slave mode
+  ret = bridge_init();
+
   if(ret == USER_RET_OK) {
     printf("init seq ok!\n");
   } else {
     printf("init seq error! %d\n", ret);
     Error_Handler();
   }
-  protocol_init(&huart3);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -133,43 +128,17 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    if((HAL_GetTick() - led_time) > 500) {
+      led_time = HAL_GetTick();
+      HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+    }
+
     if((HAL_GetTick() - gps_time) > 100) {
       gps_time = HAL_GetTick();
       GPS_UART_Callback();
     }
 
-    if((HAL_GetTick() - protocol_time) > 50) {
-      protocol_time = HAL_GetTick();
-      protocol_parser();
-
-      ret = lora_recv(lora_test_buf, &lora_test_len);
-      if(ret == USER_RET_OK) {
-        //printf("got lora data! len : %d\n", lora_test_len);
-        if(lora_test_len > 0) {
-          /*
-          printf("data[%d] : {", lora_test_len);
-          for(int i=0; i<lora_test_len; i++) {
-            printf("%02X, ", lora_test_buf[i]);
-          }
-          printf("}\n");
-		      */
-          HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-
-          packet_comm_t packet_comm;
-          uint8_t packet_data[64];
-          ret = parse_packet_comm(lora_test_buf, lora_test_len, &packet_comm, packet_data);
-          if(ret == USER_RET_OK) {
-            printf("packet_data[%d] : {", packet_comm.data_length);
-            for(int i=0; i<packet_comm.data_length; i++) {
-              printf("%02X, ", packet_data[i]);
-            }
-            printf("}\n");
-          } else {
-        	  printf("parse error! %d\n", ret);
-          }
-        }
-      }
-    }
+    bridge_task();
   }
   /* USER CODE END 3 */
 }
