@@ -58,6 +58,8 @@ void Log_message(LOG_LEVEL_e level, const char *file, const char *func, int line
 #define LOG_FATAL(fmt, ...) Log_message(LOG_FATAL, __FILE__, __func__, __LINE__, fmt, ##__VA_ARGS__)
 
 #define PI 3.141592653589793
+#define IMU_DT 0.002f
+#define IMU_TAU 0.96f
 
 // 정의된 이름은 추후 변경. 현재는 임시로 정의함.
 // 사용자 정의 에러 (STM 권장 형식)

@@ -1,4 +1,5 @@
 #include "hardware_imu.h"
+#include "filter_Kalman.h"
 #include "define.h"
 #include <math.h>
 
@@ -18,16 +19,16 @@ static Kalman_t kalmanRoll = {0};
 static Kalman_t kalmanPitch = {0};
 
 // 칼만필터 업데이트 함수 (1축)
-static float Kalman_getAngle(Kalman_t *kalman, float newAngle, float newRate, float dt) {
+static float Kalman_getAngle(Kalman_t *kalman, float newAngle, float newRate) {
     // 예측 단계
     kalman->rate = newRate - kalman->bias;
-    kalman->angle += dt * kalman->rate;
+    kalman->angle += IMU_DT * kalman->rate;
 
     // 오차 공분산 예측
-    kalman->P[0][0] += dt * (dt*kalman->P[1][1] - kalman->P[0][1] - kalman->P[1][0] + Q_ANGLE);
-    kalman->P[0][1] -= dt * kalman->P[1][1];
-    kalman->P[1][0] -= dt * kalman->P[1][1];
-    kalman->P[1][1] += Q_BIAS * dt;
+    kalman->P[0][0] += IMU_DT * (IMU_DT*kalman->P[1][1] - kalman->P[0][1] - kalman->P[1][0] + Q_ANGLE);
+    kalman->P[0][1] -= IMU_DT * kalman->P[1][1];
+    kalman->P[1][0] -= IMU_DT * kalman->P[1][1];
+    kalman->P[1][1] += Q_BIAS * IMU_DT;
 
     // 측정 업데이트
     float S = kalman->P[0][0] + R_MEASURE;
@@ -46,7 +47,7 @@ static float Kalman_getAngle(Kalman_t *kalman, float newAngle, float newRate, fl
     return kalman->angle;
 }
 
-void KalmanFilter_Update(MPU9250_t *pMPU9250, float dt)
+void KalmanFilter_Update(MPU9250_t *pMPU9250, FilteredAttitude_t *filtered)
 {
     // 가속도 기반 roll, pitch 계산
     float accelRoll  = atan2f(pMPU9250->sensorData.ay, sqrtf(pMPU9250->sensorData.az * pMPU9250->sensorData.az + pMPU9250->sensorData.ax * pMPU9250->sensorData.ax)) * 180.0f / PI;
@@ -57,15 +58,8 @@ void KalmanFilter_Update(MPU9250_t *pMPU9250, float dt)
     float gyroPitchRate = pMPU9250->sensorData.gx;
     float gyroYawRate   = pMPU9250->sensorData.gz;
 
-    // 칼만필터 적용
-    float roll  = Kalman_getAngle(&kalmanRoll,  accelRoll,  gyroRollRate,  dt);
-    float pitch = Kalman_getAngle(&kalmanPitch, accelPitch, gyroPitchRate, dt);
-
-    // Yaw는 자이로 적분
-    static float yaw = 0.0f;
-    yaw += gyroYawRate * dt;
-
-    pMPU9250->attitude.r = roll;
-    pMPU9250->attitude.p = pitch;
-    pMPU9250->attitude.y = yaw;
+    // 칼만필터 적용하여 필터링된 attitude 계산
+    filtered->roll  = Kalman_getAngle(&kalmanRoll,  accelRoll,  gyroRollRate);
+    filtered->pitch = Kalman_getAngle(&kalmanPitch, accelPitch, gyroPitchRate);
+    filtered->yaw   = pMPU9250->attitude.y;  // Yaw는 자이로 적분값 사용
 }

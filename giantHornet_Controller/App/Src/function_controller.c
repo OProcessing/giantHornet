@@ -41,7 +41,7 @@ void controller_task(void) {
         packet_comm_t *lora_packet = lora_data;
         lora_packet->header = PACKET_HEADER;
         lora_packet->type = TYPE_NONE;
-        lora_packet->action = ACTION_PACKRT;
+        lora_packet->action = ACTION_PACKET;
         lora_packet->data_length = sizeof(struct ControllerBtn_t);
         lora_packet->data_ptr = &controller_btn;
         lora_packet->tail = PACKET_TAIL;

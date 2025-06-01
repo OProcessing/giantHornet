@@ -17,7 +17,7 @@ typedef struct {
 } PID_t;
 
 
-void PID_Init(PID_t *pid, float Kp, float Ki, float Kd, float dt, float output_min, float output_max);
+void PID_Init(PID_t *pid, float Kp, float Ki, float Kd, float output_min, float output_max);
 float PID_Compute(PID_t *pid, float setpoint, float measurement);
 float PID_clamp(float value, float clamp_upper, float clamp_lower);
 

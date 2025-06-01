@@ -93,12 +93,12 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-  MPU9250.settings.gFullScaleRange = GFSR_250DPS;
-  MPU9250.settings.aFullScaleRange = AFSR_2G;
-  MPU9250.settings.CS_PIN = GPIO_PIN_13;
+  MPU9250.settings.gFullScaleRange = GFSR_1000DPS;
+  MPU9250.settings.aFullScaleRange = AFSR_8G;
+  MPU9250.settings.CS_PIN = GPIO_PIN_12;
   MPU9250.settings.CS_PORT = GPIOB;
-  MPU9250.attitude.tau = 0.98f;
-  MPU9250.attitude.dt = 0.004f;
+  MPU9250.attitude.tau = 0.96f;
+  MPU9250.attitude.dt = 0.002f;
 
   /* USER CODE END 1 */
 
@@ -121,12 +121,13 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
-  //MX_SDIO_SD_Init();
+  // MX_SDIO_SD_Init();
   MX_SPI2_Init();
   MX_USART3_UART_Init();
   MX_I2C1_Init();
   MX_I2C3_Init();
   MX_TIM2_Init();
+  MX_TIM11_Init();
   /* USER CODE BEGIN 2 */
   protocol_init(&huart3);
 
@@ -162,10 +163,10 @@ int main(void)
     //HAL_TIM_Base_Start_IT(&htim11);
     //HAL_PWR_EnableSleepOnExit();
     //HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
-    /* USER CODE END 2 */
+  /* USER CODE END 2 */
 
-    /* Infinite loop */
-    /* USER CODE BEGIN WHILE */
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
     printf("FC - loop start\n");
 
     while (1)
@@ -173,11 +174,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-      MPU_calcAttitude(&hspi2, &MPU9250);
-      printf("aX: %.2f aY: %.2f aZ: %.2f | gX: %.2f gY: %.2f gZ: %.2f | r: %.2f p: %.2f y: %.2f\n",
-      MPU9250.sensorData.ax, MPU9250.sensorData.ay, MPU9250.sensorData.az,
-      MPU9250.sensorData.gx, MPU9250.sensorData.gy, MPU9250.sensorData.gz,
-      MPU9250.attitude.r, MPU9250.attitude.p, MPU9250.attitude.y);
+      control_loop_1khz(&hspi2, &MPU9250, 0.002f);
       HAL_Delay(10);
 
       if((HAL_GetTick() - protocol_time) > 100) {

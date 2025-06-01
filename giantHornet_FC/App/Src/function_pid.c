@@ -1,12 +1,12 @@
 #include "function_pid.h"
 #include "define.h"
 
-void PID_Init(PID_t *pid, float Kp, float Ki, float Kd, float dt, float output_min, float output_max) 
+void PID_Init(PID_t *pid, float Kp, float Ki, float Kd, float output_min, float output_max) 
 {
     pid->Kp = Kp;
     pid->Ki = Ki;
     pid->Kd = Kd;
-    pid->dt = dt;
+    pid->dt = IMU_DT;
 
     pid->prev_error = 0.0f;
     pid->integral = 0.0f;
