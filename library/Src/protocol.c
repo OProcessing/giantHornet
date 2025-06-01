@@ -127,7 +127,7 @@ USER_StatusTypeDef parse_packet_comm(const uint8_t *buffer, const size_t buffer_
     uint8_t checksum = 0x00;
 
     uint16_t header = (buffer[offset] << 8) | buffer[offset+1];
-    if (header != PACKET_HEADER) return USER_RET_ERR_INVALID_PARAM;
+    if (header != PACKET_HEADER) return USER_RET_ERR_INVALID;
     out_packet->header = header;
     offset += 2;
 
@@ -143,7 +143,7 @@ USER_StatusTypeDef parse_packet_comm(const uint8_t *buffer, const size_t buffer_
     calculate_checksum(&buffer[offset], &checksum);
     offset++;
 
-    if (out_packet->data_length > MAX_PAYLOAD_LENGTH) return USER_RET_ERR_INVALID_PARAM;
+    if (out_packet->data_length > MAX_PAYLOAD_LENGTH) return USER_RET_ERR_INVALID;
     if (buffer_len < offset + out_packet->data_length + 2) return USER_RET_ERR_NO_RESOURCE;
 
     for(int i=0; i < out_packet->data_length; i++) {
@@ -152,10 +152,10 @@ USER_StatusTypeDef parse_packet_comm(const uint8_t *buffer, const size_t buffer_
     }
     offset += out_packet->data_length;
 
-    //if (buffer[offset] != checksum) return USER_RET_ERR_INVALID_PARAM;
+    //if (buffer[offset] != checksum) return ERR_INVALID_PARAM;
     offset++;
 
-    if (buffer[offset] != PACKET_TAIL) return USER_RET_ERR_INVALID_PARAM;
+    if (buffer[offset] != PACKET_TAIL) return USER_RET_ERR_INVALID;
     out_packet->tail = buffer[offset];
 
     return USER_RET_OK;

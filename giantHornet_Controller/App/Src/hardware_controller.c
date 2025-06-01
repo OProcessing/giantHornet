@@ -5,7 +5,7 @@ static uint32_t adcVal[8] = {0,};
 
 USER_StatusTypeDef controller_btn_init(struct ControllerBtn_t *controller) {
     if(!controller) {
-        return USER_RET_ERR_NULL_POINTER;
+        return ERR_NULL_POINTER;
     }
 
     controller->buttons = 0;
@@ -17,7 +17,7 @@ USER_StatusTypeDef controller_btn_init(struct ControllerBtn_t *controller) {
 
 USER_StatusTypeDef controller_btn_read(struct ControllerBtn_t *controller) {
     if(!controller) {
-        return USER_RET_ERR_NULL_POINTER;
+        return ERR_NULL_POINTER;
     }
 
     // read all buttons
