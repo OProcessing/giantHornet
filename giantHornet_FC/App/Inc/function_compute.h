@@ -5,8 +5,9 @@
 
 // 제어 루프 초기화 (PID 등)
 void control_loop_init(float dt);
+void motor_SetPWM(int motor, int pwm);
 
 // 1kHz 제어 루프 (IMU→칼만→PID→모터)
-void control_loop_1khz(SPI_HandleTypeDef *SPIx, MPU9250_t *imu, float dt);
+void control_loop(SPI_HandleTypeDef *SPIx, MPU9250_t *imu);
 
 #endif // CONTROL_LOOP_H 

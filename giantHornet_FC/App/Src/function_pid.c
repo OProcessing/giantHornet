@@ -18,13 +18,16 @@ void PID_Init(PID_t *pid, float Kp, float Ki, float Kd, float dt, float output_m
 float PID_Compute(PID_t *pid, float setpoint, float measurement) {
     float error = setpoint - measurement;
     float derivative = (error - pid->prev_error) / pid->dt;
+    LOG_DEBUG("PID Compute: setpoint=%.2f, measurement=%.2f, error=%.2f, derivative=%.2f", 
+        setpoint, measurement, error, derivative);
 
     float P_term = pid->Kp * error;
-    float D_term = pid->Kd * derivative;
     float I_term = pid->Ki * pid->integral;
+    float D_term = pid->Kd * derivative;
 
     float output = P_term + I_term + D_term;
     float output_sat = PID_clamp(output, pid->output_max, pid->output_min);
+    LOG_DEBUG("PID Output after clamp: %.2f", output_sat);
 
     // Back-calculation anti-windup
     float error_sat = output - output_sat;

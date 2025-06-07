@@ -252,6 +252,7 @@ void MPU_calcAttitude(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250)
 	// Read processed data
 	MPU_readProcessedData(SPIx, pMPU9250);
 
+	#ifndef INC_FILTER_KALMAN_H_
 	// Complementary filter
 	float accelRoll  = atan2(pMPU9250->sensorData.ay, sqrt(pMPU9250->sensorData.az * pMPU9250->sensorData.az + pMPU9250->sensorData.ax * pMPU9250->sensorData.ax)) * RAD2DEG;
 	float accelPitch = atan2(-pMPU9250->sensorData.ax, sqrt(pMPU9250->sensorData.ay * pMPU9250->sensorData.ay + pMPU9250->sensorData.az * pMPU9250->sensorData.az)) * RAD2DEG;
@@ -259,4 +260,5 @@ void MPU_calcAttitude(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250)
 	pMPU9250->attitude.r = pMPU9250->attitude.tau * (pMPU9250->attitude.r - pMPU9250->sensorData.gy * pMPU9250->attitude.dt) + (1 - pMPU9250->attitude.tau) * accelRoll;
 	pMPU9250->attitude.p = pMPU9250->attitude.tau * (pMPU9250->attitude.p - pMPU9250->sensorData.gx * pMPU9250->attitude.dt) + (1 - pMPU9250->attitude.tau) * accelPitch;
 	pMPU9250->attitude.y += (pMPU9250->sensorData.gz * pMPU9250->attitude.dt);
+	#endif
 }

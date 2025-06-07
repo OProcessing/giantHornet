@@ -1,5 +1,6 @@
 #include "hardware_imu.h"
-#include "define.h"
+#include "filter_kalman.h"
+#include "define.h" 
 #include <math.h>
 
 #define Q_ANGLE 0.001f   //  노이즈 공분산 (각도)

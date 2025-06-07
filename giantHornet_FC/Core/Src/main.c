@@ -38,6 +38,7 @@
 
 #include "usart.h"
 #include "function_protocol.h"
+#include "function_compute.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -129,7 +130,6 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
   protocol_init(&huart3);
-
   // IMU initial function
   // Check if IMU configured properly and block if it didn't
   if (MPU_begin(&hspi2, &MPU9250) != TRUE)
@@ -168,17 +168,14 @@ int main(void)
     /* USER CODE BEGIN WHILE */
     printf("FC - loop start\n");
 
+    control_loop_init(MPU9250.attitude.dt);
     while (1)
     {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-      MPU_calcAttitude(&hspi2, &MPU9250);
-      printf("aX: %.2f aY: %.2f aZ: %.2f | gX: %.2f gY: %.2f gZ: %.2f | r: %.2f p: %.2f y: %.2f\n",
-      MPU9250.sensorData.ax, MPU9250.sensorData.ay, MPU9250.sensorData.az,
-      MPU9250.sensorData.gx, MPU9250.sensorData.gy, MPU9250.sensorData.gz,
-      MPU9250.attitude.r, MPU9250.attitude.p, MPU9250.attitude.y);
-      HAL_Delay(10);
+      control_loop(&hspi2, &MPU9250);
+      HAL_Delay(50);
 
       if((HAL_GetTick() - protocol_time) > 100) {
         protocol_time = HAL_GetTick();
