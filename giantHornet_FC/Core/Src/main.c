@@ -38,6 +38,7 @@
 
 #include "usart.h"
 #include "function_protocol.h"
+#include "function_compute.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -60,6 +61,7 @@
 /* USER CODE BEGIN PV */
 uint8_t serialBuf[100];
 MPU9250_t MPU9250;
+Filtered_t filtered_attitude;
 BMP280_HandleTypedef bmp280;
 
 float pressure, temperature, humidity;
@@ -97,8 +99,6 @@ int main(void)
   MPU9250.settings.aFullScaleRange = AFSR_8G;
   MPU9250.settings.CS_PIN = GPIO_PIN_12;
   MPU9250.settings.CS_PORT = GPIOB;
-  MPU9250.attitude.tau = 0.96f;
-  MPU9250.attitude.dt = 0.002f;
 
   /* USER CODE END 1 */
 
@@ -130,7 +130,6 @@ int main(void)
   MX_TIM11_Init();
   /* USER CODE BEGIN 2 */
   protocol_init(&huart3);
-
   // IMU initial function
   // Check if IMU configured properly and block if it didn't
   if (MPU_begin(&hspi2, &MPU9250) != TRUE)
@@ -169,12 +168,13 @@ int main(void)
   /* USER CODE BEGIN WHILE */
     printf("FC - loop start\n");
 
+    control_loop_init();
     while (1)
     {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-      control_loop_1khz(&hspi2, &MPU9250, 0.002f);
+      control_loop(&hspi2, &MPU9250, &filtered_attitude);
       HAL_Delay(10);
 
       if((HAL_GetTick() - protocol_time) > 100) {

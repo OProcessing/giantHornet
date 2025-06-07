@@ -5,6 +5,7 @@
  *      Author: MarkSherstan
  */
 
+#include "define.h"
 #include "hardware_imu.h"
 
 /// @brief Check for connection, reset IMU, and set full range scale
@@ -223,7 +224,7 @@ void MPU_calibrateGyro(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250, uint16_t nu
 /// @brief Calculate the real world sensor values
 /// @param SPIx Pointer to SPI structure config
 /// @param pMPU9250 Pointer to master MPU9250 struct
-void MPU_readProcessedData(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250)
+void MPU_getData(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250)
 {
 	// Get raw values from the IMU
 	MPU_readRawData(SPIx, pMPU9250);
@@ -244,19 +245,36 @@ void MPU_readProcessedData(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250)
 	pMPU9250->sensorData.gz /= pMPU9250->sensorData.gScaleFactor;
 }
 
+/// @brief Calculate accelerometer-based roll and pitch angles
+/// @param pMPU9250 Pointer to master MPU9250 struct
+/// @param filtered Pointer to store roll angle
+void MPU_calcAccelAngles(MPU9250_t *pMPU9250, Filtered_t *filtered)
+{
+	filtered->accel.roll  = atan2(pMPU9250->sensorData.ay, sqrt(pMPU9250->sensorData.az * pMPU9250->sensorData.az + pMPU9250->sensorData.ax * pMPU9250->sensorData.ax)) * RAD2DEG;
+	filtered->accel.pitch = atan2(-pMPU9250->sensorData.ax, sqrt(pMPU9250->sensorData.ay * pMPU9250->sensorData.ay + pMPU9250->sensorData.az * pMPU9250->sensorData.az)) * RAD2DEG;
+}
+
+/// @brief Apply complementary filter to calculate final attitude
+/// @param pMPU9250 Pointer to master MPU9250 struct
+/// @param filtered Pointer to store roll angle
+void MPU_complementaryFilter(MPU9250_t *pMPU9250, Filtered_t *filtered)
+{
+	filtered->attitude.roll  = IMU_TAU * (filtered->attitude.roll  - pMPU9250->sensorData.gy * IMU_DT) + (1 - IMU_TAU) * filtered->accel.roll;
+	filtered->attitude.pitch = IMU_TAU * (filtered->attitude.pitch - pMPU9250->sensorData.gx * IMU_DT) + (1 - IMU_TAU) * filtered->accel.pitch;
+	filtered->attitude.yaw   += (pMPU9250->sensorData.gz * IMU_DT);
+}
+
 /// @brief Calculate the attitude of the sensor in degrees using a complementary filter
 /// @param SPIx Pointer to SPI structure config
 /// @param pMPU9250 Pointer to master MPU9250 struct
-void MPU_calcAttitude(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250)
+void MPU_calcAttitude(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250, Filtered_t *filtered)
 {
 	// Read processed data
-	MPU_readProcessedData(SPIx, pMPU9250);
+	MPU_getData(SPIx, pMPU9250);
 
-	// Complementary filter
-	float accelRoll  = atan2(pMPU9250->sensorData.ay, sqrt(pMPU9250->sensorData.az * pMPU9250->sensorData.az + pMPU9250->sensorData.ax * pMPU9250->sensorData.ax)) * RAD2DEG;
-	float accelPitch = atan2(-pMPU9250->sensorData.ax, sqrt(pMPU9250->sensorData.ay * pMPU9250->sensorData.ay + pMPU9250->sensorData.az * pMPU9250->sensorData.az)) * RAD2DEG;
+	MPU_calcAccelAngles(pMPU9250, filtered);
 
-	pMPU9250->attitude.r = pMPU9250->attitude.tau * (pMPU9250->attitude.r - pMPU9250->sensorData.gy * pMPU9250->attitude.dt) + (1 - pMPU9250->attitude.tau) * accelRoll;
-	pMPU9250->attitude.p = pMPU9250->attitude.tau * (pMPU9250->attitude.p - pMPU9250->sensorData.gx * pMPU9250->attitude.dt) + (1 - pMPU9250->attitude.tau) * accelPitch;
-	pMPU9250->attitude.y += (pMPU9250->sensorData.gz * pMPU9250->attitude.dt);
+	#ifndef INC_FILTER_KALMAN_H_
+	MPU_complementaryFilter(pMPU9250, filtered);
+	#endif
 }

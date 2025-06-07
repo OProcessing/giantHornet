@@ -46,6 +46,14 @@ enum accelerometerFullScaleRange
 	AFSR_16G
 };
 
+typedef struct
+{
+	float roll;
+	float pitch;
+	float yaw;
+} Attitude_t;
+
+
 // Master structure
 typedef struct MPU9250
 {
@@ -65,11 +73,7 @@ typedef struct MPU9250
 		float x, y, z;
 	} gyroCal;
 
-	struct Attitude
-	{
-		float tau, dt;
-		float r, p, y;
-	} attitude;
+	Attitude_t attitude;
 
 	struct Settings
 	{
@@ -79,16 +83,43 @@ typedef struct MPU9250
 	} settings;
 } MPU9250_t;
 
+/// @brief Filtered attitude data structure
+/// @details Contains filtered roll, pitch, and yaw angles
+typedef struct {
+
+	struct Accel_Rate
+	{
+		float roll;
+		float pitch;
+		float yaw;
+	} accel;
+
+	struct Gyro
+	{
+		float roll;
+		float pitch;
+		float yaw;
+	} gyro;
+
+	Attitude_t attitude;
+} Filtered_t;
+
 // Functions
 uint8_t MPU_begin(SPI_HandleTypeDef *SPIx, MPU9250_t *mpuStruct);
+void MPU_CS(MPU9250_t *pMPU9250, uint8_t state);
 void MPU_REG_READ(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250, uint8_t addr, uint8_t *pRxData, uint16_t RxSize);
 void MPU_REG_WRITE(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250, uint8_t *pAddr, uint8_t *pVal);
-void MPU_writeGyroFullScaleRange(SPI_HandleTypeDef *SPIx,  MPU9250_t *pMPU9250, uint8_t gScale);
-void MPU_writeAccFullScaleRange(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250, uint8_t aScale);
-void MPU_calibrateGyro(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250, uint16_t numCalPoints);
-void MPU_readProcessedData(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250);
-void MPU_calcAttitude(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250);
+
 void MPU_readRawData(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250);
-void MPU_CS(MPU9250_t *pMPU9250, uint8_t state);
+
+void MPU_calibrateGyro(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250, uint16_t numCalPoints);
+void MPU_writeAccFullScaleRange(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250, uint8_t aScale);
+void MPU_writeGyroFullScaleRange(SPI_HandleTypeDef *SPIx,  MPU9250_t *pMPU9250, uint8_t gScale);
+
+void MPU_getData(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250);
+
+void MPU_calcAccelAngles(MPU9250_t *pMPU9250, Filtered_t *filtered);
+void MPU_complementaryFilter(MPU9250_t *pMPU9250, Filtered_t *filtered);
+void MPU_calcAttitude(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250, Filtered_t *filtered);
 
 #endif /* INC_MPU9250_H_ */
