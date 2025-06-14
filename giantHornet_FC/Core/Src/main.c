@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "fatfs.h"
 #include "i2c.h"
 #include "sdio.h"
 #include "spi.h"
@@ -121,13 +122,14 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_USART2_UART_Init();
-  // MX_SDIO_SD_Init();
+  MX_SDIO_SD_Init();
   MX_SPI2_Init();
   MX_USART3_UART_Init();
   MX_I2C1_Init();
   MX_I2C3_Init();
   MX_TIM2_Init();
   MX_TIM11_Init();
+  MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
   protocol_init(&huart3);
   // IMU initial function

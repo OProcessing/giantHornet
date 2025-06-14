@@ -56,6 +56,7 @@ void MX_SPI2_Init(void)
   /* USER CODE BEGIN SPI2_Init 2 */
 
   /* USER CODE END SPI2_Init 2 */
+
 }
 
 void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
