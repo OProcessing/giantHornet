@@ -39,7 +39,7 @@ typedef enum
     LOG_ERROR,
     LOG_FATAL,
 }LOG_LEVEL_e;
-#define LOG_LEVEL   LOG_TRACE
+#define LOG_LEVEL   LOG_DEBUG
 
 void Log_message(LOG_LEVEL_e level, const char *file, const char *func, int line, const char *fmt, ...);
 /**

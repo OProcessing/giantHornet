@@ -29,6 +29,7 @@
 #include "define.h"
 #include "hardware_gps.h"
 #include "function_bridge_main.h"
+#include "function_motor_control.h"
 #include "usart.h"
 
 /* USER CODE END Includes */
@@ -121,6 +122,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  ESC_calibration();
   printf("Main - loop start\n");
 
   while (1)
