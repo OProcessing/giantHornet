@@ -23,8 +23,8 @@
  *       20% ->  4000
  *        0% ->     0
  */
-#define THROTTLE_100 20000
-#define THROTTLE_50  10000
+#define THROTTLE_100 10000
+#define THROTTLE_50   5000
 #define THROTTLE_0       0
 
 uint16_t Throttle(uint16_t value);

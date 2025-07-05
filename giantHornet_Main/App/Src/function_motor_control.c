@@ -4,9 +4,12 @@
 #include "gpio.h"
 
 extern TIM_HandleTypeDef htim2;
-
+// 500 Hz 
+// 20000 ticks per 1 second
+// so if you wanna make 1ms pulse than High 10000ticks
 uint16_t Throttle(uint16_t value)
 {
+    value += 10000;
     if(value > 20000) return 20000;
     else return value;
 }
