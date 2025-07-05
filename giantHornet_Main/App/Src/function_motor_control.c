@@ -28,19 +28,58 @@ void ESC_calibration(void)
     HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
     HAL_Delay(100);
 
-    htim2.Instance->CCR1 = Throttle(THROTTLE_100); 
-    htim2.Instance->CCR2 = Throttle(THROTTLE_100);
-    htim2.Instance->CCR3 = Throttle(THROTTLE_100); 
-    htim2.Instance->CCR4 = Throttle(THROTTLE_100);
+    htim2.Instance->CCR1 = Throttle(THROTTLE_0);
+    htim2.Instance->CCR2 = Throttle(THROTTLE_0);
+    htim2.Instance->CCR3 = Throttle(THROTTLE_0);
+    htim2.Instance->CCR4 = Throttle(THROTTLE_0);
     LOG_DEBUG("set throttle 100, wait til cal, CCR1 : %d", htim2.Instance->CCR1);
     HAL_Delay(CALIBRATION_TIME_MS);
     LOG_DEBUG("calibration Done");
+
+    while(1)
+    {
+    	if(!HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin))
+    	{
+    		break;
+    	}
+    	HAL_Delay(10);
+    }
+
+    htim2.Instance->CCR1 = Throttle(THROTTLE_100);
+	htim2.Instance->CCR2 = Throttle(THROTTLE_100);
+	htim2.Instance->CCR3 = Throttle(THROTTLE_100);
+	htim2.Instance->CCR4 = Throttle(THROTTLE_100);
+    LOG_DEBUG("set throttle 0, wait til cal, CCR1 : %d", htim2.Instance->CCR1);
+    HAL_Delay(CALIBRATION_TIME_MS);
+    LOG_DEBUG("calibration Done");
+
+    while(1)
+    {
+    	if(!HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin))
+    	{
+    		break;
+    	}
+    	HAL_Delay(10);
+    }
 
     htim2.Instance->CCR1 = Throttle(THROTTLE_0);
     htim2.Instance->CCR2 = Throttle(THROTTLE_0);
     htim2.Instance->CCR3 = Throttle(THROTTLE_0);
     htim2.Instance->CCR4 = Throttle(THROTTLE_0);
-    LOG_DEBUG("set throttle 0, wait til cal, CCR1 : %d", htim2.Instance->CCR1);
-    HAL_Delay(CALIBRATION_TIME_MS);
-    LOG_DEBUG("calibration Done");
+	LOG_DEBUG("set throttle 0, wait til cal, CCR1 : %d", htim2.Instance->CCR1);
+	HAL_Delay(CALIBRATION_TIME_MS);
+	LOG_DEBUG("calibration Done");
+
+    while(1)
+    {
+    	if(!HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin))
+    	{
+    		break;
+    	}
+    	HAL_Delay(10);
+    }
+    htim2.Instance->CCR1 = 11000;
+    htim2.Instance->CCR2 = 11000;
+    htim2.Instance->CCR3 = 11000;
+    htim2.Instance->CCR4 = 11000;
 }
