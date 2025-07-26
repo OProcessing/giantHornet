@@ -33,7 +33,7 @@
 		<link>
 			<name>library</name>
 			<type>2</type>
-			<location>D:/Coding/GitHub_repos/giantHornet_hotfix/library</location>
+			<locationURI>WORKSPACE_LOC/library</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>
