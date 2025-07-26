@@ -18,8 +18,11 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "fatfs.h"
+#include "i2c.h"
 #include "sdio.h"
 #include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -32,8 +35,11 @@
 #include "math.h"
 
 #include "hardware_imu.h"
-#include "bmp280.h"
+#include "hardware_altitude.h"
 
+#include "usart.h"
+#include "function_protocol.h"
+#include "function_compute.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,6 +62,7 @@
 /* USER CODE BEGIN PV */
 uint8_t serialBuf[100];
 MPU9250_t MPU9250;
+Filtered_t filtered_attitude;
 BMP280_HandleTypedef bmp280;
 
 float pressure, temperature, humidity;
@@ -63,6 +70,7 @@ float pressure, temperature, humidity;
 uint16_t size;
 uint8_t Data[256];
 
+uint32_t protocol_time;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -73,7 +81,11 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+int _write(int fd, char *ptr, int len)
+{
+  HAL_UART_Transmit(&huart2, (const uint8_t *)ptr, len, 100);
+  return len;
+}
 /* USER CODE END 0 */
 
 /**
@@ -84,12 +96,10 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-  MPU9250.settings.gFullScaleRange = GFSR_500DPS;
-  MPU9250.settings.aFullScaleRange = AFSR_4G;
-  MPU9250.settings.CS_PIN = GPIO_PIN_13;
+  MPU9250.settings.gFullScaleRange = GFSR_1000DPS;
+  MPU9250.settings.aFullScaleRange = AFSR_8G;
+  MPU9250.settings.CS_PIN = GPIO_PIN_12;
   MPU9250.settings.CS_PORT = GPIOB;
-  MPU9250.attitude.tau = 0.98;
-  MPU9250.attitude.dt = 0.004;
 
   /* USER CODE END 1 */
 
@@ -100,22 +110,28 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 
-  /* USER CODE END Init */\
+  /* USER CODE END Init */
+
+  /* Configure the system clock */
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
 
-	/* Initialize all configured peripherals */
-	MX_GPIO_Init();
-	MX_USART2_UART_Init();
-	//MX_SDIO_SD_Init();
-	MX_SPI2_Init();
-	MX_SPI3_Init();
-	MX_USART3_UART_Init();
-	/* USER CODE BEGIN 2 */
-
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_USART2_UART_Init();
+  MX_SDIO_SD_Init();
+  MX_SPI2_Init();
+  MX_USART3_UART_Init();
+  MX_I2C1_Init();
+  MX_I2C3_Init();
+  MX_TIM2_Init();
+  MX_TIM11_Init();
+  MX_FATFS_Init();
+  /* USER CODE BEGIN 2 */
+  protocol_init(&huart3);
   // IMU initial function
   // Check if IMU configured properly and block if it didn't
   if (MPU_begin(&hspi2, &MPU9250) != TRUE)
@@ -125,40 +141,49 @@ int main(void)
     while (1){}
   }
 
-  // Calibrate the IMU
-  sprintf((char *)serialBuf, "CALIBRATING...\r\n");
-  HAL_UART_Transmit(&huart2, serialBuf, strlen((char *)serialBuf), HAL_MAX_DELAY);
-  MPU_calibrateGyro(&hspi2, &MPU9250, 1500);
-  // IMU Process end
-
-  bmp280_init_default_params(&bmp280.params);
+    // Calibrate the IMU
+    sprintf((char *)serialBuf, "CALIBRATING...\r\n");
+    HAL_UART_Transmit(&huart2, serialBuf, strlen((char *)serialBuf), HAL_MAX_DELAY);
+    MPU_calibrateGyro(&hspi2, &MPU9250, 1500);
+    // IMU Process end
+    /*
+    bmp280_init_default_params(&bmp280.params);
 	bmp280.addr = BMP280_I2C_ADDRESS_0;
-	bmp280.i2c = &hi2c1;
+	bmp280.i2c = &hi2c3;
 
 	while (!bmp280_init(&bmp280, &bmp280.params)) {
 		size = sprintf((char *)Data, "BMP280 initialization failed\n");
-		HAL_UART_Transmit(&huart1, Data, size, 1000);
+		HAL_UART_Transmit(&huart2, Data, size, 1000);
 		HAL_Delay(2000);
 	}
 	bool bme280p = bmp280.id == BME280_CHIP_ID;
 	size = sprintf((char *)Data, "BMP280: found %s\n", bme280p ? "BME280" : "BMP280");
-	HAL_UART_Transmit(&huart1, Data, size, 1000);
-
-  // Start timer and put processor into an efficient low power mode
-  //HAL_TIM_Base_Start_IT(&htim11);
-  //HAL_PWR_EnableSleepOnExit();
-  //HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+	HAL_UART_Transmit(&huart2, Data, size, 1000);
+    */
+    // Start timer and put processor into an efficient low power mode
+    //HAL_TIM_Base_Start_IT(&htim11);
+    //HAL_PWR_EnableSleepOnExit();
+    //HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  float roll;
-  while (1)
-  {
+    printf("FC - loop start\n");
+
+    control_loop_init();
+    while (1)
+    {
     /* USER CODE END WHILE */
-	  MPU_readProcessedData(&hspi2, &MPU9250);
+
     /* USER CODE BEGIN 3 */
-  }
+      control_loop(&hspi2, &MPU9250, &filtered_attitude);
+      HAL_Delay(10);
+
+      if((HAL_GetTick() - protocol_time) > 100) {
+        protocol_time = HAL_GetTick();
+        protocol_parser();
+      }
+    }
   /* USER CODE END 3 */
 }
 
@@ -174,7 +199,7 @@ void SystemClock_Config(void)
   /** Configure the main internal regulator output voltage
   */
   __HAL_RCC_PWR_CLK_ENABLE();
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
@@ -184,12 +209,19 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 16;
-  RCC_OscInitStruct.PLL.PLLN = 336;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
-  RCC_OscInitStruct.PLL.PLLQ = 7;
+  RCC_OscInitStruct.PLL.PLLM = 8;
+  RCC_OscInitStruct.PLL.PLLN = 180;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+  RCC_OscInitStruct.PLL.PLLQ = 8;
   RCC_OscInitStruct.PLL.PLLR = 2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Activate the Over-Drive mode
+  */
+  if (HAL_PWREx_EnableOverDrive() != HAL_OK)
   {
     Error_Handler();
   }
@@ -200,10 +232,10 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
   {
     Error_Handler();
   }

@@ -1,1 +1,6 @@
+#ifndef INC_FUNCTION_EVENT_LOG_H_
+#define INC_FUNCTION_EVENT_LOG_H_
 
+
+
+#endif /* INC_FUNCTION_EVENT_LOG_H_ */

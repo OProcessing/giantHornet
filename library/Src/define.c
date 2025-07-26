@@ -19,35 +19,35 @@ void Log_message(LOG_LEVEL_e level, const char *file, const char *func, int line
 
     switch (level) {
         case LOG_DEBUG:
-            printf("[%s] [%s->%s:%d] %s [time:%lu]\n", 
+            printf("[%s] [%s->%s:%d] %s [time:%lu]\r\n", 
             level_str[level], file, func, line, msg, (unsigned long)now); 
             break;
 
         case LOG_INFO:
-            printf("[%s] [%s] %s\n", level_str[level], func, msg); 
+            printf("[%s] [%s] %s\r\n", level_str[level], func, msg); 
             break;
 
         case LOG_TRACE:
-            printf("[%s] [%s]\n", level_str[level], func); 
+            printf("[%s] [%s]\r\n", level_str[level], func); 
             break;
 
         case LOG_WARN:
-            printf("[%s] [%s] %s\n", level_str[level], func, msg); 
+            printf("[%s] [%s] %s\r\n", level_str[level], func, msg); 
             break;
 
         case LOG_ERROR:
-            printf("[%s] [%s->%s:%d] %s [time:%lu]\n", 
+            printf("[%s] [%s->%s:%d] %s [time:%lu]\r\n", 
             level_str[level], file, func, line, msg, (unsigned long)now);
             break;
 
         case LOG_FATAL:
-            printf("[%s] [%s->%s:%d] %s [time:%lu]\n", 
+            printf("[%s] [%s->%s:%d] %s [time:%lu]\r\n", 
             level_str[level], file, func, line, msg, (unsigned long)now);
             while(1);
             break;
 
         default:
-            printf("[UNKNOWN] %s\n", msg); 
+            printf("[UNKNOWN] %s\r\n", msg); 
             break;
     }
 }

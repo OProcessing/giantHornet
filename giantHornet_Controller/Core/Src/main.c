@@ -104,19 +104,17 @@ int main(void)
   MX_SPI2_Init();
   MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
-  USER_StatusTypeDef ret = controller_init(&hspi2);
+  USER_StatusTypeDef ret = controller_init();
   if(ret == USER_RET_OK) {
-    printf("init seq ok!\n");
+    printf("init seq ok!");
   } else {
-    printf("init seq error! %d\n", ret);
+    printf("init seq error! %d", ret);
     Error_Handler();
   }
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  printf("Controller - loop start\n");
-
   while (1)
   {
     /* USER CODE END WHILE */

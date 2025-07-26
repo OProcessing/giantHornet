@@ -50,14 +50,16 @@ void Log_message(LOG_LEVEL_e level, const char *file, const char *func, int line
  * ERROR    : [level] [file:line->func] [error message]   [fmt] [time]
  * FATAL    : [level] [file:line->func] [fatal message]   [fmt] [time]
  */
-#define LOG_DEBUG(fmt, ...) Log_message(LOG_DEBUG, __FILE__, __func__, __LINE__, fmt, ##__VA_ARGS__)
-#define LOG_INFO(fmt, ...)  Log_message(LOG_INFO,      NULL, __func__,       -1, fmt, ##__VA_ARGS__)
-#define LOG_TRACE(fmt, ...) Log_message(LOG_TRACE,     NULL, __func__,       -1, fmt, ##__VA_ARGS__)
-#define LOG_WARN(fmt, ...)  Log_message(LOG_WARN,      NULL, __func__,       -1, fmt, ##__VA_ARGS__)
-#define LOG_ERROR(fmt, ...) Log_message(LOG_ERROR,     NULL, __func__,       -1, fmt, ##__VA_ARGS__)
-#define LOG_FATAL(fmt, ...) Log_message(LOG_FATAL, __FILE__, __func__, __LINE__, fmt, ##__VA_ARGS__)
+#define LOG_DEBUG(fmt, ...) do { if (LOG_LEVEL <= LOG_DEBUG) Log_message(LOG_DEBUG, __FILE__, __func__, __LINE__, fmt, ##__VA_ARGS__); } while (0)
+#define LOG_INFO(fmt, ...)  do { if (LOG_LEVEL <= LOG_INFO)  Log_message(LOG_INFO,      NULL, __func__,       -1, fmt, ##__VA_ARGS__); } while (0)
+#define LOG_TRACE(fmt, ...) do { if (LOG_LEVEL <= LOG_TRACE) Log_message(LOG_TRACE,     NULL, __func__,       -1, fmt, ##__VA_ARGS__); } while (0)
+#define LOG_WARN(fmt, ...)  do { if (LOG_LEVEL <= LOG_WARN)  Log_message(LOG_WARN,      NULL, __func__,       -1, fmt, ##__VA_ARGS__); } while (0)
+#define LOG_ERROR(fmt, ...) do { if (LOG_LEVEL <= LOG_ERROR) Log_message(LOG_ERROR,     NULL, __func__,       -1, fmt, ##__VA_ARGS__); } while (0)
+#define LOG_FATAL(fmt, ...) do { if (LOG_LEVEL <= LOG_FATAL) Log_message(LOG_FATAL, __FILE__, __func__, __LINE__, fmt, ##__VA_ARGS__); } while (0)
 
 #define PI 3.141592653589793
+#define IMU_DT 0.002f
+#define IMU_TAU 0.96f
 
 // 정의된 이름은 추후 변경. 현재는 임시로 정의함.
 // 사용자 정의 에러 (STM 권장 형식)

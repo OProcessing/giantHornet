@@ -107,12 +107,10 @@ void GPS_DebugPrint(void)
 
 static NMEA_Type GPS_GetNMEAType(const char *nmea)
 {
-    if (nmea == NULL || nmea[0] != '$') return NMEA_UNKNOWN;
-    nmea += 3;
-    if (strncmp(nmea, "GGA", 3) == 0) return NMEA_GGA;
-    if (strncmp(nmea, "RMC", 3) == 0) return NMEA_RMC;
-    if (strncmp(nmea, "GLL", 3) == 0) return NMEA_GLL;
-    if (strncmp(nmea, "VTG", 3) == 0) return NMEA_VTG;
+    if (strncmp(nmea, "$GPGGA", 6) == 0) return NMEA_GPGGA;
+    if (strncmp(nmea, "$GPRMC", 6) == 0) return NMEA_GPRMC;
+    if (strncmp(nmea, "$GPGLL", 6) == 0) return NMEA_GPGLL;
+    if (strncmp(nmea, "$GPVTG", 6) == 0) return NMEA_GPVTG;
     return NMEA_UNKNOWN;
 }
 
@@ -139,11 +137,11 @@ int GPS_ParseNMEA(char *nmea)
     switch (type)
     {
         case NMEA_UNKNOWN: break;
-        case NMEA_GGA: ret = GPS_GGA_Parse(nmea); break;
-        case NMEA_GSV: ret = GPS_GSV_Parse(nmea); break;
-        case NMEA_RMC: ret = GPS_RMC_Parse(nmea); break;
-        case NMEA_GLL: ret = GPS_GLL_Parse(nmea); break;
-        case NMEA_VTG: ret = GPS_VTG_Parse(nmea); break;
+        case NMEA_GPGGA: ret = GPS_GPGGA_Parse(nmea); break;
+        case NMEA_GPGSV: ret = GPS_GPGSV_Parse(nmea); break;
+        case NMEA_GPRMC: ret = GPS_GPRMC_Parse(nmea); break;
+        case NMEA_GPGLL: ret = GPS_GPGLL_Parse(nmea); break;
+        case NMEA_GPVTG: ret = GPS_GPVTG_Parse(nmea); break;
         default: break;
 
     }
@@ -152,9 +150,9 @@ int GPS_ParseNMEA(char *nmea)
 }
 
 
-int GPS_GGA_Parse(char *nmea) 
+int GPS_GPGGA_Parse(char *nmea) 
 {
-    int ret = sscanf(nmea, "GGA,%f,%f,%c,%f,%c,%d,%d,%*f,%f",
+    int ret = sscanf(nmea, "$GPGGA,%f,%f,%c,%f,%c,%d,%d,%*f,%f",
         &GPS.time.utc_time,
         &GPS.location.latitude, &GPS.location.ns,
         &GPS.location.longitude, &GPS.location.ew,
@@ -168,10 +166,10 @@ int GPS_GGA_Parse(char *nmea)
     return -1;
 }
 
-int GPS_GSV_Parse(char *nmea)
+int GPS_GPGSV_Parse(char *nmea)
 {
     int total_msgs, msg_num, sats_in_view;
-    int ret = sscanf(nmea, "GSV,%d,%d,%d", &total_msgs, &msg_num, &sats_in_view);
+    int ret = sscanf(nmea, "$GPGSV,%d,%d,%d", &total_msgs, &msg_num, &sats_in_view);
 
     if (ret >= 3)
     {
@@ -181,12 +179,12 @@ int GPS_GSV_Parse(char *nmea)
     return -1;
 }
 
-int GPS_RMC_Parse(char *nmea)
+int GPS_GPRMC_Parse(char *nmea)
 {
     float speed_knots, course;
     char status;
 
-    int ret = sscanf(nmea, "RMC,%f,%c,%f,%c,%f,%c,%f,%f,%ld",
+    int ret = sscanf(nmea, "$GPRMC,%f,%c,%f,%c,%f,%c,%f,%f,%ld",
         &GPS.time.utc_time,
         &status,
         &GPS.location.latitude, &GPS.location.ns,
@@ -203,9 +201,9 @@ int GPS_RMC_Parse(char *nmea)
     return -1;
 }
 
-int GPS_GLL_Parse(char *nmea)
+int GPS_GPGLL_Parse(char *nmea)
 {
-    int ret = sscanf(nmea, "GLL,%f,%c,%f,%c,%f",
+    int ret = sscanf(nmea, "$GPGLL,%f,%c,%f,%c,%f",
         &GPS.location.latitude, &GPS.location.ns,
         &GPS.location.longitude, &GPS.location.ew,
         &GPS.time.utc_time);
@@ -217,11 +215,11 @@ int GPS_GLL_Parse(char *nmea)
     return -1;
 }
 
-int GPS_VTG_Parse(char *nmea)
+int GPS_GPVTG_Parse(char *nmea)
 {
     float true_track, magnetic_track, speed_knots, speed_kph;
 
-    int ret = sscanf(nmea, "VTG,%f,T,%f,M,%f,N,%f,K",
+    int ret = sscanf(nmea, "$GPVTG,%f,T,%f,M,%f,N,%f,K",
         &true_track, &magnetic_track, &speed_knots, &speed_kph);
 
     if (ret >= 4)
