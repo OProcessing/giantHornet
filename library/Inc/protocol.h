@@ -62,7 +62,7 @@ typedef struct {
     packet_type_t       type : 8;
     packet_action_t     action : 8;
     uint8_t             data_length;
-    const uint8_t       *data_ptr;
+    uint8_t             *data_ptr;
     uint8_t             checksum;
     uint8_t             tail;
 } packet_comm_t;

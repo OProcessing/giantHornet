@@ -34,10 +34,31 @@ USER_StatusTypeDef lora_init(uint8_t master_enable) {
 	}
 }
 
-USER_StatusTypeDef lora_send(void* data, size_t* len) {
-    return USER_RET_OK;
+USER_StatusTypeDef lora_send(void* data, uint8_t* len) {
+    int ret;
+    ret = SX1278_LoRaEntryTx(&SX1278, *len, LORA_TIMEOUT);
+    if(ret < 0) {
+        return USER_RET_ERR_COMM_FAILED;
+    }
+
+    ret = SX1278_LoRaTxPacket(&SX1278, (uint8_t*)data, (uint8_t)*len, LORA_TIMEOUT);
+    if(ret < 0) {
+        return USER_RET_ERR_COMM_FAILED;
+    } else {
+        return USER_RET_OK;
+    }
 }
 
-USER_StatusTypeDef lora_recv(void* data, size_t* len) {
-    return USER_RET_OK;
+USER_StatusTypeDef lora_recv(void* data, uint8_t* len) {
+    int ret;
+    ret = SX1278_LoRaRxPacket(&SX1278);
+
+    if(ret < 0) {
+        *len = ret;
+        return USER_RET_ERR_COMM_FAILED;
+    } else {
+        ret = SX1278_read(&SX1278, (uint8_t*)data, ret);
+        *len = ret;
+        return USER_RET_OK;
+    }
 }
