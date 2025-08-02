@@ -54,6 +54,7 @@
 /* USER CODE BEGIN PV */
 uint32_t led_time;
 uint32_t gps_time;
+uint32_t esc_time;
 
 /* USER CODE END PV */
 
@@ -142,6 +143,20 @@ int main(void)
     }
 
     bridge_task();
+
+    // ESC control
+    if((HAL_GetTick() - esc_time) > 100) {
+      esc_time = HAL_GetTick();
+      int8_t joy_y = (int8_t)remote_data[3]; // joy_y
+      joy_y = (joy_y < 0) ? 0 : joy_y;
+      uint16_t throttle = ((float)joy_y / 127) * 10000;
+      //printf("%d=%02X, %d\n", joy_y, joy_y, throttle);
+
+      htim2.Instance->CCR1 = Throttle(throttle);
+      htim2.Instance->CCR2 = Throttle(throttle);
+      htim2.Instance->CCR3 = Throttle(throttle);
+      htim2.Instance->CCR4 = Throttle(throttle);
+    }
   }
   /* USER CODE END 3 */
 }

@@ -37,14 +37,14 @@ USER_StatusTypeDef controller_btn_read(struct ControllerBtn_t *controller) {
     joy_temp += adcVal[2];
     joy_temp += adcVal[3];
 
-    controller->joy00_x = ((float)joy_temp / 16380); // 4095*4 = 16380
+    controller->joy00_y = joy_temp >> 4;
 
     joy_temp = adcVal[4];
     joy_temp += adcVal[5];
     joy_temp += adcVal[6];
     joy_temp += adcVal[7];
 
-    controller->joy00_y = ((float)joy_temp / 16380); // 4095*4 = 16380
+    controller->joy00_x = joy_temp >> 4;
 
     // start next conversion
     HAL_ADC_Start_DMA(&hadc1, adcVal, 8);
