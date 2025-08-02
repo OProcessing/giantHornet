@@ -1,6 +1,7 @@
 #include "function_protocol.h"
 #include "protocol.h"
 #include "ring_buffer.h"
+#include "hardware_sd_card.h"
 
 static UART_HandleTypeDef* huart;
 static uint8_t rx_temp;
@@ -126,11 +127,54 @@ void protocol_handler(packet_comm_t *packet_comm_data) {
 		return;
 	}
 
+	// Log packet to SD card
+	uint8_t packet_buffer[64]; // Maximum packet size
+	uint16_t packet_length = 0;
+	
+	// Reconstruct packet for SD logging
+	packet_buffer[packet_length++] = (PACKET_HEADER >> 8) & 0xFF; // Header 1
+	packet_buffer[packet_length++] = PACKET_HEADER & 0xFF;         // Header 2
+	
+	// Add timestamp (simplified - you might want to get actual timestamp)
+	uint32_t timestamp = HAL_GetTick() / 1000;
+	uint16_t timestamp_ms = HAL_GetTick() % 1000;
+	packet_buffer[packet_length++] = (timestamp >> 24) & 0xFF;
+	packet_buffer[packet_length++] = (timestamp >> 16) & 0xFF;
+	packet_buffer[packet_length++] = (timestamp >> 8) & 0xFF;
+	packet_buffer[packet_length++] = timestamp & 0xFF;
+	packet_buffer[packet_length++] = (timestamp_ms >> 8) & 0xFF;
+	packet_buffer[packet_length++] = timestamp_ms & 0xFF;
+	
+	// Add packet data
+	packet_buffer[packet_length++] = packet_comm_data->type;
+	packet_buffer[packet_length++] = packet_comm_data->action;
+	packet_buffer[packet_length++] = packet_comm_data->data_length;
+	
+	// Add data
+	for(int i = 0; i < packet_comm_data->data_length; i++) {
+		packet_buffer[packet_length++] = packet_comm_data->data_ptr[i];
+	}
+	
+	// Log to SD card
+	SD_LogExternalPacket(packet_buffer, packet_length);
+
 	switch (packet_comm_data->type) {
 	case TYPE_NONE:
 			printf("got packet!, %02X\n", packet_comm_data->data_ptr[0]);
 		break;
 	case TYPE_GPS_COORDINATES:
+		// GPS 좌표 데이터 처리
+		break;
+	case TYPE_GPS_INIT_TIME:
+		// GPS 시간 초기화 데이터 처리
+		if (packet_comm_data->data_length >= 4) {
+			uint32_t gps_time = (packet_comm_data->data_ptr[0] << 24) |
+							   (packet_comm_data->data_ptr[1] << 16) |
+							   (packet_comm_data->data_ptr[2] << 8) |
+							   packet_comm_data->data_ptr[3];
+			SD_SetGPSTime(gps_time);
+			printf("GPS INIT TIME set: %lu\n", gps_time);
+		}
 		break;
 	case TYPE_PID_RESULTS:
 		break;

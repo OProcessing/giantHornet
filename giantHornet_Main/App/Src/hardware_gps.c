@@ -1,6 +1,9 @@
 #include "define.h"
 #include "hardware_gps.h"
 #include "ring_buffer.h"
+#include "protocol.h"
+#include "function_protocol.h"
+#include <time.h>
 
 static UART_HandleTypeDef *gps_huart;
 
@@ -8,6 +11,8 @@ uint8_t gps_rx_byte = 0;
 uint8_t gps_rx_buffer[GPS_BUFFER_SIZE];
 char gps_sentence_buffer[GPS_BUFFER_SIZE];
 
+// GPS 연결 상태 추적
+static uint8_t gps_first_fix_sent = 0;  // 첫 번째 GPS fix 시 시간 패킷 전송 여부
 
 GPS_t GPS;
 RingBuffer gps_RingBuffer;
@@ -145,6 +150,13 @@ int GPS_ParseNMEA(char *nmea)
         default: break;
 
     }
+    
+    // 첫 번째 GPS fix 시 시간 패킷 전송
+    if (GPS_IsFirstFix()) {
+        GPS_SendTimePacket();
+        gps_first_fix_sent = 1;  // 플래그 설정
+    }
+    
     GPS_DebugPrint();
     return ret;
 }
@@ -229,4 +241,40 @@ int GPS_GPVTG_Parse(char *nmea)
         return 0;
     }
     return -1;
+}
+
+/**
+ * @brief GPS 시간 패킷 전송
+ */
+void GPS_SendTimePacket(void)
+{
+    // 간단한 시간 데이터 (예시: 2024년 기준)
+    unsigned long unix_time = 1704067200;  // 2024-01-01 00:00:00 UTC
+    
+    // 시간 데이터를 바이트 배열로 변환
+    uint8_t time_data[4];
+    time_data[0] = (unix_time >> 24) & 0xFF;
+    time_data[1] = (unix_time >> 16) & 0xFF;
+    time_data[2] = (unix_time >> 8) & 0xFF;
+    time_data[3] = unix_time & 0xFF;
+    
+    // 패킷 생성 및 전송
+    packet_comm_t time_packet;
+    create_packet_comm(&time_packet, TYPE_GPS_INIT_TIME, ACTION_PACKET, time_data, 4);
+    
+    uint8_t packet_buffer[64];
+    uint8_t packet_length = make_packet_comm(packet_buffer, &time_packet);
+    
+    protocol_tx(packet_buffer, packet_length);
+    
+    printf("GPS Time packet sent: %lu\n", unix_time);
+}
+
+/**
+ * @brief 첫 번째 GPS fix인지 확인
+ * @retval 1: 첫 번째 fix, 0: 이미 fix됨
+ */
+int GPS_IsFirstFix(void)
+{
+    return (GPS_isValid() == 0 && gps_first_fix_sent == 0) ? 1 : 0;
 }

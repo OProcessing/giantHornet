@@ -26,6 +26,7 @@ typedef enum {
 typedef enum {
     TYPE_NONE,
     TYPE_GPS_COORDINATES,
+    TYPE_GPS_INIT_TIME,
     TYPE_PID_RESULTS,
     TYPE_IMU_ALT_GPS,
     TYPE_PID_CALC_DATA,

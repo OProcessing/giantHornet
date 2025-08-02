@@ -55,4 +55,8 @@ int GPS_GPRMC_Parse(char *nmea);
 int GPS_GPGLL_Parse(char *nmea);
 int GPS_GPVTG_Parse(char *nmea);
 
+// GPS 시간 전송 관련 함수들
+void GPS_SendTimePacket(void);
+int GPS_IsFirstFix(void);
+
 #endif /* INC_HARDWARE_GPS_H_ */

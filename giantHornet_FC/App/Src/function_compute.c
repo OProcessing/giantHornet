@@ -5,6 +5,7 @@
 #include "define.h"
 #include "function_compute.h"
 #include "define.h"
+#include "hardware_sd_card.h"
 
 static PID_t pid_roll, pid_pitch, pid_yaw;
 
@@ -70,5 +71,25 @@ void control_loop(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250, Filtered_t *filt
     motor_SetPWM(2, motor2);
     motor_SetPWM(3, motor3);
     motor_SetPWM(4, motor4);
+    
+    // SD 카드 로깅 - 실제 하드웨어 스펙 기반
+    // IMU 데이터 로깅 (1kHz - 실제 IMU 샘플링 레이트)
+    SD_LogRawIMU_Freq(pMPU9250, 1000);
+    SD_LogKalmanFiltered_Freq(filtered, 1000);
+    
+    // PID 출력 로깅 (500Hz - 모터 제어 주기와 동기화)
+    float pid_outputs[4] = {roll_output, pitch_output, yaw_output, (float)throttle};
+    SD_LogPIDOutputs_Freq(pid_outputs, 500);
+    
+    // 모터 입력값 로깅 (500Hz - 모터 PWM 주기와 동기화)
+    uint16_t motor_inputs[4] = {(uint16_t)motor1, (uint16_t)motor2, (uint16_t)motor3, (uint16_t)motor4};
+    SD_LogMotorInputs_Freq(motor_inputs, 500);
+    
     return;
 } 
+
+
+
+
+
+

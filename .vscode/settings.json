@@ -4,6 +4,7 @@
         "define.h": "c",
         "function_flight_control.h": "c",
         "stm32f4xx_hal_tim.h": "c",
-        "tim.h": "c"
+        "tim.h": "c",
+        "string.h": "c"
     }
 }

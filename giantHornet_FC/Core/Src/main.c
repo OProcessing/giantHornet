@@ -36,6 +36,7 @@
 
 #include "hardware_imu.h"
 #include "hardware_altitude.h"
+#include "hardware_sd_card.h"
 
 #include "usart.h"
 #include "function_protocol.h"
@@ -132,6 +133,15 @@ int main(void)
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
   protocol_init(&huart3);
+  
+  // Initialize SD card logging
+  if (SD_Init()) {
+    sprintf((char *)serialBuf, "SD Card initialized successfully\r\n");
+    HAL_UART_Transmit(&huart2, serialBuf, strlen((char *)serialBuf), HAL_MAX_DELAY);
+  } else {
+    sprintf((char *)serialBuf, "SD Card initialization failed\r\n");
+    HAL_UART_Transmit(&huart2, serialBuf, strlen((char *)serialBuf), HAL_MAX_DELAY);
+  }
   // IMU initial function
   // Check if IMU configured properly and block if it didn't
   if (MPU_begin(&hspi2, &MPU9250) != TRUE)
@@ -177,6 +187,14 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
       control_loop(&hspi2, &MPU9250, &filtered_attitude);
+      
+      // 저빈도 로깅 (1Hz) - 시스템 상태
+      SD_LogFlightControllerState_Freq(0, 1, 0.0f, 0.0f, 1); // mode, armed, altitude, vspeed
+      
+      // 압력 데이터 로깅 (5Hz) - BMP280 초기화 후 활성화
+      // Uncomment when BMP280 is initialized
+      // SD_LogInternalPressure(pressure, temperature);
+      
       HAL_Delay(10);
 
       if((HAL_GetTick() - protocol_time) > 100) {
