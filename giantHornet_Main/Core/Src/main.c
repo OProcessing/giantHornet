@@ -149,7 +149,7 @@ int main(void)
       esc_time = HAL_GetTick();
       int8_t joy_y = (int8_t)remote_data[3]; // joy_y
       joy_y = (joy_y < 0) ? 0 : joy_y;
-      uint16_t throttle = ((float)joy_y / 127) * 10000;
+      uint16_t throttle = ((float)joy_y / 127) * 9900;
       //printf("%d=%02X, %d\n", joy_y, joy_y, throttle);
 
       htim2.Instance->CCR1 = Throttle(throttle);
