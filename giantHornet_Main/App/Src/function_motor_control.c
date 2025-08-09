@@ -45,10 +45,10 @@ void ESC_calibration(void)
     	HAL_Delay(10);
     }
 
-    htim2.Instance->CCR1 = Throttle(THROTTLE_100);
-	htim2.Instance->CCR2 = Throttle(THROTTLE_100);
-	htim2.Instance->CCR3 = Throttle(THROTTLE_100);
-	htim2.Instance->CCR4 = Throttle(THROTTLE_100);
+    htim2.Instance->CCR1 = Throttle(THROTTLE_CALI);
+	htim2.Instance->CCR2 = Throttle(THROTTLE_CALI);
+	htim2.Instance->CCR3 = Throttle(THROTTLE_CALI);
+	htim2.Instance->CCR4 = Throttle(THROTTLE_CALI);
     LOG_DEBUG("set throttle 0, wait til cal, CCR1 : %d", htim2.Instance->CCR1);
     HAL_Delay(CALIBRATION_TIME_MS);
     LOG_DEBUG("calibration Done");

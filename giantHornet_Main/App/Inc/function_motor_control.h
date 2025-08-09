@@ -23,9 +23,10 @@
  *       20% ->  4000
  *        0% ->     0
  */
-#define THROTTLE_100 10000
-#define THROTTLE_50   5000
-#define THROTTLE_0       0
+#define THROTTLE_CALI 10000
+#define THROTTLE_100   9900
+#define THROTTLE_50    5000
+#define THROTTLE_0        0
 
 uint16_t Throttle(uint16_t value);
 void ESC_power_set(uint8_t value);
