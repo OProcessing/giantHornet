@@ -29,5 +29,6 @@
 #define THROTTLE_0        0
 
 uint16_t Throttle(uint16_t value);
+uint16_t Throttle_set(int motor, uint16_t value);
 void ESC_power_set(uint8_t value);
 void ESC_calibration(void);

@@ -144,7 +144,7 @@ int main(void)
 
     bridge_task();
 
-    // ESC control
+    // ESC control (test)
     if((HAL_GetTick() - esc_time) > 100) {
       esc_time = HAL_GetTick();
       int8_t joy_y = (int8_t)remote_data[3]; // joy_y
@@ -152,10 +152,10 @@ int main(void)
       uint16_t throttle = ((float)joy_y / 127) * THROTTLE_100;
       //printf("%d=%02X, %d\n", joy_y, joy_y, throttle);
 
-      htim2.Instance->CCR1 = Throttle(throttle);
-      htim2.Instance->CCR2 = Throttle(throttle);
-      htim2.Instance->CCR3 = Throttle(throttle);
-      htim2.Instance->CCR4 = Throttle(throttle);
+      Throttle_set(1, throttle);
+      Throttle_set(2, throttle);
+      Throttle_set(3, throttle);
+      Throttle_set(4, throttle);
     }
   }
   /* USER CODE END 3 */
