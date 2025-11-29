@@ -20,10 +20,10 @@ struct ControllerBtn_t { // 20 bytes
         };
         uint32_t buttons;
     };
-    float joy00_x;
-    float joy00_y;
-    uint32_t reserved1;
-    uint32_t reserved2;
+    uint16_t joy00_x;
+    uint16_t joy00_y;
+    uint16_t reserved1;
+    uint16_t reserved2;
 };
 
 USER_StatusTypeDef controller_btn_init(struct ControllerBtn_t *controller);
