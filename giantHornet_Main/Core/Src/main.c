@@ -30,6 +30,7 @@
 #include "protocol.h"
 #include "hardware_gps.h"
 #include "function_bridge_main.h"
+#include "function_controller.h"
 #include "function_motor_control.h"
 #include "usart.h"
 

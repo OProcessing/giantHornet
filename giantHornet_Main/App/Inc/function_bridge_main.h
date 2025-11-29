@@ -6,8 +6,6 @@
 
 #define BRIDGE_PERIOD 50
 
-extern remote_control_t remote_data;
-
 USER_StatusTypeDef bridge_init(void);
 void bridge_task(void);
 
