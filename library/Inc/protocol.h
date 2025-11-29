@@ -68,6 +68,18 @@ typedef struct {
 } packet_comm_t;
 #pragma pack(pop)
 
+// remote
+#pragma pack(push, 1)
+typedef struct {
+    uint8_t buttons;
+    uint8_t btn_reserved;
+    int8_t joy_x;
+    int8_t joy_y;
+    int8_t joy_reserved_1;
+    int8_t joy_reserved_2;
+} remote_control_t;
+#pragma pack(pop)
+
 /**
  * @brief calculate checksum
  * 

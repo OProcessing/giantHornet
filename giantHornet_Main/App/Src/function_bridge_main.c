@@ -4,7 +4,7 @@
 
 static uint8_t lora_buf[256];
 static uint8_t lora_len;
-uint8_t remote_data[6] = {0, 0, 0, 0, 0, 0};
+remote_control_t remote_data;
 
 static uint32_t protocol_time;
 
@@ -44,7 +44,7 @@ void bridge_task(void) {
                 */
 
                 if(packet_comm.type == TYPE_REMOTE && packet_comm.action == ACTION_PACKET) {
-                    memcpy(remote_data, packet_data, 6);
+                    memcpy(&remote_data, packet_data, sizeof(remote_data));
                 }
             } else {
                 printf("parse error! %d\n", ret);

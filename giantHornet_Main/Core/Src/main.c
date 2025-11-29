@@ -27,6 +27,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "define.h"
+#include "protocol.h"
 #include "hardware_gps.h"
 #include "function_bridge_main.h"
 #include "function_motor_control.h"
@@ -145,10 +146,9 @@ int main(void)
     bridge_task();
 
     // ESC control (test)
-    if((HAL_GetTick() - esc_time) > 100) {
+    if((HAL_GetTick() - esc_time) > 10) {
       esc_time = HAL_GetTick();
-      int8_t joy_y = (int8_t)remote_data[3]; // joy_y
-      joy_y = (joy_y < 0) ? 0 : joy_y;
+      int8_t joy_y = (remote_data.joy_y < 0) ? 0 : remote_data.joy_y;
       uint16_t throttle = ((float)joy_y / 127) * THROTTLE_100;
       //printf("%d=%02X, %d\n", joy_y, joy_y, throttle);
 

@@ -51,20 +51,16 @@ void controller_task(void) {
         joy_y = (joy_y > 127) ? 127 : joy_y;
         joy_y = (joy_y < -128) ? -128 : joy_y;
 
-        uint8_t remote_data[6] = {
-            (~controller_btn.buttons & 0xFF),
-            0x00,
-            (int8_t)joy_x,
-            (int8_t)joy_y,
-            0x00,
-            0x00
-        };
+        remote_control_t remote_data;
+        remote_data.buttons = ~controller_btn.buttons & 0xFF;
+        remote_data.joy_x = (int8_t)joy_x;
+        remote_data.joy_y = (int8_t)joy_y;
 
         printf("x,y = %d, %d\n", controller_btn.joy00_x, controller_btn.joy00_y);
-        printf("remote_data = %d, %d\n", (int8_t)remote_data[2], (int8_t)remote_data[3]);
+        printf("remote_data = %d, %d\n", remote_data.joy_x, remote_data.joy_y);
 
         packet_comm_t packet_comm;
-        create_packet_comm(&packet_comm, TYPE_REMOTE, ACTION_PACKET, remote_data, 6);
+        create_packet_comm(&packet_comm, TYPE_REMOTE, ACTION_PACKET, (uint8_t *)&remote_data, sizeof(remote_data));
         uint8_t len = make_packet_comm(lora_data, &packet_comm);
 
         /*
