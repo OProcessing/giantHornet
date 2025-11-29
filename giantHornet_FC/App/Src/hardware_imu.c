@@ -212,7 +212,7 @@ void MPU_calibrateGyro(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250, uint16_t nu
 		x += pMPU9250->rawData.gx;
 		y += pMPU9250->rawData.gy;
 		z += pMPU9250->rawData.gz;
-		HAL_Delay(10);
+		HAL_Delay(1);
 	}
 
 	// Average the saved data points to find the gyroscope offset

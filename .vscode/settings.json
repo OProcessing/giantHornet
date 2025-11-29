@@ -5,6 +5,28 @@
         "function_flight_control.h": "c",
         "stm32f4xx_hal_tim.h": "c",
         "tim.h": "c",
-        "string.h": "c"
-    }
+        "string.h": "c",
+        "freertos.h": "c",
+        "cstdio": "c"
+    },
+    "workbench.colorCustomizations": {
+        "activityBar.activeBackground": "#3e7c6b",
+        "activityBar.background": "#3e7c6b",
+        "activityBar.foreground": "#e7e7e7",
+        "activityBar.inactiveForeground": "#e7e7e799",
+        "activityBarBadge.background": "#c9aad4",
+        "activityBarBadge.foreground": "#15202b",
+        "commandCenter.border": "#e7e7e799",
+        "sash.hoverBorder": "#3e7c6b",
+        "statusBar.background": "#2d5a4e",
+        "statusBar.foreground": "#e7e7e7",
+        "statusBarItem.hoverBackground": "#3e7c6b",
+        "statusBarItem.remoteBackground": "#2d5a4e",
+        "statusBarItem.remoteForeground": "#e7e7e7",
+        "titleBar.activeBackground": "#2d5a4e",
+        "titleBar.activeForeground": "#e7e7e7",
+        "titleBar.inactiveBackground": "#2d5a4e99",
+        "titleBar.inactiveForeground": "#e7e7e799"
+    },
+    "peacock.color": "#2d5a4e"
 }

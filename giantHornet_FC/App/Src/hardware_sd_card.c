@@ -98,10 +98,16 @@ static void SD_GetTimestamp(uint32_t *timestamp, uint16_t *ms)
 uint8_t SD_Init(void)
 {
     // Store system start time
-    systemStartTime = HAL_GetTick();
+	systemStartTime = HAL_GetTick();
+    
+    // Initialize SDFatFS to zero to ensure clean state
+    memset(&SDFatFS, 0, sizeof(FATFS));
     
     // Mount SD card
-    if (f_mount(&SDFatFS, SDPath, 1) != FR_OK) {
+    // With _FS_REENTRANT = 0, f_mount does not use FreeRTOS API
+    // Can be called before osKernelStart()
+    FRESULT res = f_mount(&SDFatFS, SDPath, 1);
+    if (res != FR_OK) {
         return 0;
     }
     

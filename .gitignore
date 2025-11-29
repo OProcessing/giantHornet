@@ -4,7 +4,7 @@
 *.xml
 *.launch
 *.md
-
+.vscode/*
 giantHornet_Main/Debug/*
 giantHornet_Main/giantHornet_Main Debug.launch
 giantHornet_FC/Debug/*

@@ -97,7 +97,12 @@ void HAL_SD_MspInit(SD_HandleTypeDef* sdHandle)
     HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /* USER CODE BEGIN SDIO_MspInit 1 */
-
+    /* SDIO interrupt configuration
+     * Priority must be <= configMAX_SYSCALL_INTERRUPT_PRIORITY (5)
+     * to allow FreeRTOS API calls from SDIO interrupt handler
+     */
+    HAL_NVIC_SetPriority(SDIO_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(SDIO_IRQn);
   /* USER CODE END SDIO_MspInit 1 */
   }
 }

@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 #include "fatfs.h"
 #include "i2c.h"
 #include "sdio.h"
@@ -25,6 +26,8 @@
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -76,6 +79,7 @@ uint32_t protocol_time;
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -84,8 +88,8 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN 0 */
 int _write(int fd, char *ptr, int len)
 {
-  HAL_UART_Transmit(&huart2, (const uint8_t *)ptr, len, 100);
-  return len;
+	HAL_UART_Transmit(&huart2, (const uint8_t *)ptr, len, 100);
+	return len;
 }
 /* USER CODE END 0 */
 
@@ -97,10 +101,10 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-  MPU9250.settings.gFullScaleRange = GFSR_1000DPS;
-  MPU9250.settings.aFullScaleRange = AFSR_8G;
-  MPU9250.settings.CS_PIN = GPIO_PIN_12;
-  MPU9250.settings.CS_PORT = GPIOB;
+	MPU9250.settings.gFullScaleRange = GFSR_1000DPS;
+	MPU9250.settings.aFullScaleRange = AFSR_8G;
+	MPU9250.settings.CS_PIN = GPIO_PIN_12;
+	MPU9250.settings.CS_PORT = GPIOB;
 
   /* USER CODE END 1 */
 
@@ -110,7 +114,9 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  /* Freeze watchdog when debugger is attached */
+  __HAL_DBGMCU_FREEZE_IWDG();
+  __HAL_DBGMCU_FREEZE_WWDG();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -169,39 +175,35 @@ int main(void)
 	bool bme280p = bmp280.id == BME280_CHIP_ID;
 	size = sprintf((char *)Data, "BMP280: found %s\n", bme280p ? "BME280" : "BMP280");
 	HAL_UART_Transmit(&huart2, Data, size, 1000);
-    */
-    // Start timer and put processor into an efficient low power mode
-    //HAL_TIM_Base_Start_IT(&htim11);
-    //HAL_PWR_EnableSleepOnExit();
-    //HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+	*/
+	// Start timer and put processor into an efficient low power mode
+	//HAL_TIM_Base_Start_IT(&htim11);
+	//HAL_PWR_EnableSleepOnExit();
+	//HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+
   /* USER CODE END 2 */
+
+  /* Init scheduler */
+  osKernelInitialize();
+
+  /* Call init function for freertos objects (in cmsis_os2.c) */
+  MX_FREERTOS_Init();
+
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-    printf("FC - loop start\n");
-
-    control_loop_init();
-    while (1)
-    {
+  while (1)
+  {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-      control_loop(&hspi2, &MPU9250, &filtered_attitude);
-      
-      // 저빈도 로깅 (1Hz) - 시스템 상태
-      SD_LogFlightControllerState_Freq(0, 1, 0.0f, 0.0f, 1); // mode, armed, altitude, vspeed
-      
-      // 압력 데이터 로깅 (5Hz) - BMP280 초기화 후 활성화
-      // Uncomment when BMP280 is initialized
-      // SD_LogInternalPressure(pressure, temperature);
-      
-      HAL_Delay(10);
-
-      if((HAL_GetTick() - protocol_time) > 100) {
-        protocol_time = HAL_GetTick();
-        protocol_parser();
-      }
-    }
+    // All periodic tasks are now handled by FreeRTOS tasks
+    osDelay(1000);
+  }
   /* USER CODE END 3 */
 }
 
@@ -264,17 +266,39 @@ void SystemClock_Config(void)
 /* USER CODE END 4 */
 
 /**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM6 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM6)
+  {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
+}
+
+/**
   * @brief  This function is executed in case of error occurrence.
   * @retval None
   */
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1)
-  {
-  }
+	/* User can add his own implementation to report the HAL error return state */
+	__disable_irq();
+	while (1)
+	{
+	}
   /* USER CODE END Error_Handler_Debug */
 }
 
@@ -289,8 +313,8 @@ void Error_Handler(void)
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+	/* User can add his own implementation to report the file name and line number,
+		 ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
