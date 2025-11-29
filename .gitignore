@@ -1,6 +1,9 @@
 *.bkp
 .metadata/
 
+*.xml
+*.launch
+*.md
 
 giantHornet_Main/Debug/*
 giantHornet_Main/giantHornet_Main Debug.launch
