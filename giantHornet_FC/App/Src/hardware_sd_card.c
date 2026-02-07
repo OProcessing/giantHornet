@@ -24,6 +24,7 @@
 #include "string.h"
 #include "stdio.h"
 #include "stdlib.h"
+#include "stm32f4xx_hal.h"
 
 /* Private defines -----------------------------------------------------------*/
 #define MAX_LOG_LINE_LENGTH 256
@@ -104,8 +105,6 @@ uint8_t SD_Init(void)
     memset(&SDFatFS, 0, sizeof(FATFS));
     
     // Mount SD card
-    // With _FS_REENTRANT = 0, f_mount does not use FreeRTOS API
-    // Can be called before osKernelStart()
     FRESULT res = f_mount(&SDFatFS, SDPath, 1);
     if (res != FR_OK) {
         return 0;
@@ -116,14 +115,17 @@ uint8_t SD_Init(void)
         return 0;
     }
     
-    // Create and open log file
-    if (f_open(&logFile, currentFilename, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK) {
-        return 0;
-    }
+	// Create and open log file
+	res = f_open(&logFile, currentFilename, FA_CREATE_ALWAYS | FA_WRITE);
+	if (res != FR_OK) {
+		return 0;
+	}
     
     // Write CSV header
     const char *header = "timestamp,timestamp_ms,sensor_type,data\n";
-    if (f_write(&logFile, header, strlen(header), NULL) != FR_OK) {
+    UINT bw;
+    res = f_write(&logFile, (BYTE *)header, (UINT)strlen(header), &bw);
+    if (res != FR_OK) {
         f_close(&logFile);
         return 0;
     }
@@ -142,7 +144,6 @@ uint8_t SD_Init(void)
  */
 static uint8_t SD_CreateFilename(char *filename)
 {
-    // Get current time (simplified - you might want to use RTC)
     uint32_t tick = HAL_GetTick();
     uint32_t seconds = tick / 1000;
     uint32_t minutes = seconds / 60;
@@ -150,7 +151,7 @@ static uint8_t SD_CreateFilename(char *filename)
     uint32_t days = hours / 24;
     
     // Simple date calculation (approximate)
-    uint32_t year = 2024;
+    uint32_t year = 2026;
     uint32_t month = 1;
     uint32_t day = (days % 365) + 1;
 
