@@ -72,6 +72,8 @@ uint16_t size;
 uint8_t Data[256];
 
 uint32_t protocol_time;
+
+volatile uint8_t control_loop_tick = 0;  /* set by TIM11 callback, consumed in main loop */
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -182,14 +184,27 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   control_loop_init();
+  HAL_TIM_Base_Start_IT(&htim11);
+  static uint32_t time = 0;
+  static uint32_t delta_time = 0;
+  static int count = 0;
   while (1)
   {
+    if (control_loop_tick)
+    {
+      time = HAL_GetTick();
+      control_loop_tick = 0;
+      control_loop(&hspi2, &MPU9250, &filtered_attitude);
+      delta_time += HAL_GetTick() - time;
+      count ++;
+      if (count == 1024) {
+        delta_time = delta_time >> 10;
+        count = 0;
+      }
+    }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    control_loop(&hspi2, &MPU9250, &filtered_attitude);
-    HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-    HAL_Delay(1000);
   }
   /* USER CODE END 3 */
 }
@@ -249,7 +264,11 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  if (htim->Instance == TIM11)
+    control_loop_tick = 1;
+}
 /* USER CODE END 4 */
 
 /**

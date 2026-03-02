@@ -3,9 +3,8 @@
 #include "function_pid.h"
 #include "function_compute.h"
 #include "define.h"
-#include "function_compute.h"
-#include "define.h"
 #include "hardware_sd_card.h"
+#include "function_protocol.h"
 
 static PID_t pid_roll, pid_pitch, pid_yaw;
 
@@ -35,21 +34,20 @@ void motor_debug(int motor, int pwm)
     }
     return;
 }
-
 void control_loop(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250, Filtered_t *filtered) 
 {
     // LOG_TRACE("control_loop() called");
 
     MPU_getData(SPIx, pMPU9250);
-    // LOG_DEBUG("Raw Data: ax=%d, ay=%d, az=%d, gx=%d, gy=%d, gz=%d",
-        // pMPU9250->rawData.ax, pMPU9250->rawData.ay, pMPU9250->rawData.az,
-        // pMPU9250->rawData.gx, pMPU9250->rawData.gy, pMPU9250->rawData.gz);
+    LOG_DEBUG("Raw Data: ax=%d, ay=%d, az=%d, gx=%d, gy=%d, gz=%d",
+        pMPU9250->rawData.ax, pMPU9250->rawData.ay, pMPU9250->rawData.az,
+        pMPU9250->rawData.gx, pMPU9250->rawData.gy, pMPU9250->rawData.gz);
 
     KalmanFilter_Update(pMPU9250, filtered);
 
-    // LOG_DEBUG("Sensor Data: ax=%.2f, ay=%.2f, az=%.2f, gx=%.2f, gy=%.2f, gz=%.2f",
-        // pMPU9250->sensorData.ax, pMPU9250->sensorData.ay, pMPU9250->sensorData.az,
-        // pMPU9250->sensorData.gx, pMPU9250->sensorData.gy, pMPU9250->sensorData.gz);
+    LOG_DEBUG("Sensor Data: ax=%.2f, ay=%.2f, az=%.2f, gx=%.2f, gy=%.2f, gz=%.2f",
+        pMPU9250->sensorData.ax, pMPU9250->sensorData.ay, pMPU9250->sensorData.az,
+        pMPU9250->sensorData.gx, pMPU9250->sensorData.gy, pMPU9250->sensorData.gz);
 
     float target_roll = 0.0f;
     float target_pitch = 0.0f;
@@ -58,8 +56,8 @@ void control_loop(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250, Filtered_t *filt
     float roll_output  = PID_Compute(&pid_roll,  target_roll,  filtered->attitude.roll);
     float pitch_output = PID_Compute(&pid_pitch, target_pitch, filtered->attitude.pitch);
     float yaw_output   = PID_Compute(&pid_yaw,   target_yaw,   filtered->attitude.yaw);
-    // LOG_DEBUG("PID Outputs: roll=%.2f, pitch=%.2f, yaw=%.2f", 
-        // roll_output, pitch_output, yaw_output);
+    LOG_DEBUG("PID Outputs: roll=%.2f, pitch=%.2f, yaw=%.2f", 
+        roll_output, pitch_output, yaw_output);
 
     int throttle = 1500;    
     int motor1 = throttle + roll_output - pitch_output + yaw_output;
@@ -81,10 +79,11 @@ void control_loop(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250, Filtered_t *filt
     float pid_outputs[4] = {roll_output, pitch_output, yaw_output, (float)throttle};
     SD_LogPIDOutputs_Freq(pid_outputs, 500);
     
-    // 모터 입력값 로깅 (500Hz - 모터 PWM 주기와 동기화)
+    /* 모터 입력값 로깅 및 다른 MCU로 패킷 전송 */
     uint16_t motor_inputs[4] = {(uint16_t)motor1, (uint16_t)motor2, (uint16_t)motor3, (uint16_t)motor4};
     SD_LogMotorInputs_Freq(motor_inputs, 500);
-    
+    protocol_send_motor_control(motor_inputs);
+
     return;
 } 
 

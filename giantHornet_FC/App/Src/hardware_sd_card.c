@@ -29,7 +29,7 @@
 /* Private defines -----------------------------------------------------------*/
 #define MAX_LOG_LINE_LENGTH 256
 #define MAX_FILENAME_LENGTH 32
-#define LOG_BUFFER_SIZE 512
+#define LOG_BUFFER_SIZE 2048
 
 /* Private variables ---------------------------------------------------------*/
 static FIL logFile;
@@ -38,6 +38,7 @@ static uint16_t bufferIndex = 0;
 static uint8_t sdInitialized = 0;
 static char currentFilename[MAX_FILENAME_LENGTH];
 static uint32_t systemStartTime = 0;  // 시스템 시작 시간 저장
+static uint32_t lastSyncTick = 0;
 
 // GPS 시간 보정을 위한 변수들
 static uint32_t gpsTimestamp = 0;     // GPS에서 받은 UTC timestamp
@@ -171,7 +172,10 @@ static uint8_t SD_WriteBuffer(void)
             return 0;
         }
         bufferIndex = 0;
-        f_sync(&logFile);
+        if ((HAL_GetTick() - lastSyncTick) >= 300u) {
+            f_sync(&logFile);
+            lastSyncTick = HAL_GetTick();
+        }
     }
     return 1;
 }
@@ -282,6 +286,7 @@ uint8_t SD_CloseLogFile(void)
     if (!sdInitialized) return 0;
     
     SD_WriteBuffer();
+    f_sync(&logFile);
     f_close(&logFile);
     sdInitialized = 0;
     

@@ -42,6 +42,27 @@ void protocol_tx(uint8_t *data, size_t len) {
 	HAL_UART_Transmit(huart, (const uint8_t *)data, len, 100);
 }
 
+#define MOTOR_PAYLOAD_LEN 8U
+void protocol_send_motor_control(const uint16_t motor_inputs[4])
+{
+	uint8_t payload[MOTOR_PAYLOAD_LEN];
+	payload[0] = (uint8_t)(motor_inputs[0] >> 8);
+	payload[1] = (uint8_t)(motor_inputs[0] & 0xFF);
+	payload[2] = (uint8_t)(motor_inputs[1] >> 8);
+	payload[3] = (uint8_t)(motor_inputs[1] & 0xFF);
+	payload[4] = (uint8_t)(motor_inputs[2] >> 8);
+	payload[5] = (uint8_t)(motor_inputs[2] & 0xFF);
+	payload[6] = (uint8_t)(motor_inputs[3] >> 8);
+	payload[7] = (uint8_t)(motor_inputs[3] & 0xFF);
+
+	packet_comm_t pkt;
+	create_packet_comm(&pkt, TYPE_MOTOR_CONTROL, ACTION_PACKET, payload, MOTOR_PAYLOAD_LEN);
+	uint8_t buf[64];
+	uint8_t len = make_packet_comm(buf, &pkt);
+	if (len > 0)
+		protocol_tx(buf, len);
+}
+
 void protocol_parser(void) {
 	uint8_t buf_temp;
 
@@ -181,6 +202,9 @@ void protocol_handler(packet_comm_t *packet_comm_data) {
 	case TYPE_IMU_ALT_GPS:
 		break;
 	case TYPE_PID_CALC_DATA:
+		break;
+	case TYPE_MOTOR_CONTROL:
+		/* 다른 MCU에서 수신한 모터 제어 패킷 처리 (필요 시 구현) */
 		break;
 	default:
 		break;

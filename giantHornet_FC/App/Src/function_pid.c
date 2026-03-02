@@ -45,7 +45,7 @@ float PID_Compute(PID_t *pid, float setpoint, float measurement) {
     float output_sat = PID_clamp(output, pid->output_max, pid->output_min);
     LOG_DEBUG("PID Output after clamp: %.2f", output_sat);
 
-    // Back-calculation anti-windup
+    /* Back-calculation anti-windup */
     float error_sat = output - output_sat;
     pid->integral += (error * pid->dt) - (pid->Kaw * error_sat * pid->dt);
 

@@ -172,20 +172,25 @@ void MPU_writeGyroFullScaleRange(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250, u
 /// @param pMPU9250 Pointer to master MPU9250 struct
 void MPU_readRawData(SPI_HandleTypeDef *SPIx, MPU9250_t *pMPU9250)
 {
-	// Init buffer
-	uint8_t buf[14];
+	uint8_t txBuf[15];
+	uint8_t rxBuf[15];
+	uint8_t i;
 
-	// Subroutine for reading the raw data
-	MPU_REG_READ(SPIx, pMPU9250, ACCEL_XOUT_H, &buf[0], 14);
+	txBuf[0] = ACCEL_XOUT_H | READWRITE;
+	for (i = 1; i < 15; i++)
+		txBuf[i] = 0U;
 
-	// Bit shift the data
-	pMPU9250->rawData.ax = buf[0] << 8 | buf[1];
-	pMPU9250->rawData.ay = buf[2] << 8 | buf[3];
-	pMPU9250->rawData.az = buf[4] << 8 | buf[5];
-	// temperature = buf[6] << 8 | buf[7];
-	pMPU9250->rawData.gx = buf[8] << 8 | buf[9];
-	pMPU9250->rawData.gy = buf[10] << 8 | buf[11];
-	pMPU9250->rawData.gz = buf[12] << 8 | buf[13];
+	MPU_CS(pMPU9250, CS_SELECT);
+	HAL_SPI_TransmitReceive(SPIx, txBuf, rxBuf, 15, SPI_TIMOUT_MS);
+	MPU_CS(pMPU9250, CS_DESELECT);
+
+	/* rxBuf[0] is dummy (sent while addr), rxBuf[1..14] = accel/gyro data */
+	pMPU9250->rawData.ax = (int16_t)(rxBuf[1] << 8 | rxBuf[2]);
+	pMPU9250->rawData.ay = (int16_t)(rxBuf[3] << 8 | rxBuf[4]);
+	pMPU9250->rawData.az = (int16_t)(rxBuf[5] << 8 | rxBuf[6]);
+	pMPU9250->rawData.gx = (int16_t)(rxBuf[9] << 8 | rxBuf[10]);
+	pMPU9250->rawData.gy = (int16_t)(rxBuf[11] << 8 | rxBuf[12]);
+	pMPU9250->rawData.gz = (int16_t)(rxBuf[13] << 8 | rxBuf[14]);
 }
 
 /// @brief Find offsets for each axis of gyroscope

@@ -39,7 +39,7 @@ typedef enum
     LOG_ERROR,
     LOG_FATAL,
 }LOG_LEVEL_e;
-#define LOG_LEVEL   LOG_DEBUG
+#define LOG_LEVEL   LOG_INFO   /* LOG_DEBUG 시 PID_Compute 내 printf 6회/루프로 수 ms 지연 */
 
 void Log_message(LOG_LEVEL_e level, const char *file, const char *func, int line, const char *fmt, ...);
 /**
