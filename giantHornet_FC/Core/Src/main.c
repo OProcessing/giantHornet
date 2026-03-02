@@ -38,7 +38,7 @@
 #include "hardware_altitude.h"
 
 #include "usart.h"
-#include "function_protocol.h"
+#include "function_bridge_FC.h"
 #include "function_compute.h"
 /* USER CODE END Includes */
 
@@ -70,7 +70,8 @@ float pressure, temperature, humidity;
 uint16_t size;
 uint8_t Data[256];
 
-uint32_t protocol_time;
+uint32_t led_time;
+uint32_t control_time;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -131,7 +132,16 @@ int main(void)
   MX_TIM11_Init();
   MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
-  protocol_init(&huart3);
+  bridge_init();
+  
+  // Initialize SD card logging
+  if (SD_Init()) {
+    sprintf((char *)serialBuf, "SD Card initialized successfully\r\n");
+    HAL_UART_Transmit(&huart2, serialBuf, strlen((char *)serialBuf), HAL_MAX_DELAY);
+  } else {
+    sprintf((char *)serialBuf, "SD Card initialization failed\r\n");
+    HAL_UART_Transmit(&huart2, serialBuf, strlen((char *)serialBuf), HAL_MAX_DELAY);
+  }
   // IMU initial function
   // Check if IMU configured properly and block if it didn't
   if (MPU_begin(&hspi2, &MPU9250) != TRUE)
@@ -176,14 +186,19 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-      control_loop(&hspi2, &MPU9250, &filtered_attitude);
-      HAL_Delay(10);
-
-      if((HAL_GetTick() - protocol_time) > 100) {
-        protocol_time = HAL_GetTick();
-        protocol_parser();
-      }
+    if((HAL_GetTick() - led_time) > 500) {
+      led_time = HAL_GetTick();
+      HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
     }
+
+    bridge_task();
+
+    // control loop
+    if((HAL_GetTick() - control_time) > 10) {
+      control_time = HAL_GetTick();
+      control_loop(&hspi2, &MPU9250, &filtered_attitude);
+    }
+  }
   /* USER CODE END 3 */
 }
 
